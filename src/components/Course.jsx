@@ -1,11 +1,28 @@
 import React, { useEffect, useState } from "react";
 
-export const Course = ({ course, finishedCourses, setFinishedCourses }) => {
+export const Course = ({
+  course,
+  finishedCourses,
+  setFinishedCourses,
+  setTotalCredits,
+  totalCredits,
+}) => {
   const [takeCourse, setTakeCourse] = useState(false);
 
   useEffect(() => {
-    const reqCheck = course.req.every(req => finishedCourses.includes(req.id));
-    setTakeCourse(reqCheck);
+    const isCreditRequired = "rc" in course;
+    const creditCheck = isCreditRequired && totalCredits >= 400;
+
+    const reqCheck = course.req.every(req => {
+      const isCompleted = finishedCourses.includes(req.id);
+      return isCompleted && (!isCreditRequired || creditCheck);
+    });
+
+    if ("rc" in course) {
+      setTakeCourse(reqCheck && creditCheck);
+    } else {
+      setTakeCourse(reqCheck);
+    }
   }, [course.req, finishedCourses]);
 
   const isFinished = finishedCourses.includes(course.id);
@@ -16,11 +33,14 @@ export const Course = ({ course, finishedCourses, setFinishedCourses }) => {
 
   const handleClick = () => {
     if (!isFinished) {
+      if (course.cr) setTotalCredits(state => state + course.cr);
+
       setFinishedCourses(prevFinishedCourses => [
         ...prevFinishedCourses,
         course.id,
       ]);
     } else {
+      if (course.cr) setTotalCredits(state => state - course.cr);
       setFinishedCourses(prevFinishedCourses =>
         prevFinishedCourses.filter(id => id != course.id)
       );
@@ -29,9 +49,9 @@ export const Course = ({ course, finishedCourses, setFinishedCourses }) => {
 
   return (
     <div
-      className={`w-32 bg-gray-600 mb-2 rounded-lg hover:cursor-pointer ${isFinished ? "custom-line" : ""} ${
-        !takeCourse ? "opacity-25" : ""
-      } mx-1`}
+      className={`w-32 bg-gray-600 mb-2 rounded-lg hover:cursor-pointer ${
+        isFinished ? "custom-line" : ""
+      } ${!takeCourse ? "opacity-25" : ""} mx-1`}
       onClick={handleClick}
     >
       <div className="flex justify-between items-center h-6">
