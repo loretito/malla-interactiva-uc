@@ -1,0 +1,31 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer components {
+  .course-code{
+    @apply rounded-full  h-4 w-4 flex justify-center items-center text-xs;
+  }
+}
+
+.line-clamp{
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+
+.custom-line {
+  position: relative;
+}
+
+.custom-line::before {
+  content: "";
+  position: absolute;
+  top: 50%;
+  left: 0;
+  width: 100%;
+  height: 5px;
+  background-color: rgb(83, 3, 3); /* Color de la línea personalizada */
+  transform: rotate(-35deg); /* Ajusta el ángulo de la línea */
+}
