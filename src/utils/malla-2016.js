@@ -246,7 +246,7 @@ export const ramos2016 = [
     semester: 'IV',
     year: 2,
     cc: FON,
-    cr: 10,
+    cr: 5,
     req: [
       { id: 12, cc: FON },
       { id: 18, cc: LET },
@@ -517,7 +517,6 @@ export const ramos2016 = [
     semester: 'VIII',
     year: 4,
     cc: DEF,
-    cr: 10,
     req: [],
   },
   {

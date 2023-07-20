@@ -4,11 +4,12 @@ import { Semesters } from "./components/Semesters";
 import { Button } from "./components/Button";
 import { Navbar } from "./components/Navbar";
 import { ramos2023 } from "./utils/malla-2023";
+import { Footer } from "./components/Footer";
 
 const storedFinishedCourses =
   JSON.parse(localStorage.getItem("finishedCourses")) || [];
 
-const credits = JSON.parse(localStorage.getItem("credits")) || 0;  
+const credits = JSON.parse(localStorage.getItem("credits")) || 0;
 
 const stored = JSON.parse(localStorage.getItem("stored")) || "Malla Nueva";
 
@@ -34,7 +35,7 @@ function App() {
 
   useEffect(() => {
     localStorage.setItem("finishedCourses", JSON.stringify(finishedCourses));
-    localStorage.setItem('credits',JSON.stringify(totalCredits))
+    localStorage.setItem("credits", JSON.stringify(totalCredits));
   }, [finishedCourses]);
 
   useEffect(() => {
@@ -42,16 +43,26 @@ function App() {
   }, [title]);
 
   const handleReset = () => {
-    setTotalCredits(0)
+    setTotalCredits(0);
     setFinishedCourses([]);
   };
-
+  console.log(finishedCourses.length);
   return (
-    <div>
+    <>
       <Navbar title={title} setTitle={setTitle} handleReset={handleReset} />
       <div className="max-w-screen-xl mx-auto">
         <Button handleReset={handleReset} />
-        <p>Total creditos: {totalCredits}</p>
+        <div className="flex">
+          <div className="flex mr-12">
+            <p className="mr-2">Total creditos: {totalCredits}</p>{" "}
+            <p>({((totalCredits * 100) / 500).toFixed(1)}%)</p>
+          </div>
+
+          <div className="flex">
+            <p className="mr-2">Ramos aprobados: {finishedCourses.length}</p>
+            <p>({((finishedCourses.length * 100) / 55).toFixed(1)}%)</p>
+          </div>
+        </div>
       </div>
       <div className="flex lg:justify-center max-w-full overflow-x-auto">
         {Object.entries(coursesBySemesterAndYear).map(
@@ -77,7 +88,17 @@ function App() {
           )
         )}
       </div>
-    </div>
+
+      <div className="flex  my-4 items-center mx-auto justify-center">
+        <div className="w-80 text-justify sm:block hidden mr-16">
+          Puedes tachar tus ramos aprobados haciendo click en ellos. A medida que vas aprobando ramos, se van liberando los que tienen prerrequisitos
+        </div>
+        <div className="w-80 ">
+          <img src="/course-info.png" />
+        </div>
+      </div>
+      <Footer />
+    </>
   );
 }
 

@@ -26,6 +26,7 @@
   left: 0;
   width: 100%;
   height: 5px;
-  background-color: rgb(83, 3, 3); /* Color de la línea personalizada */
-  transform: rotate(35deg); /* Ajusta el ángulo de la línea */
+  background-color: rgb(83, 3, 3); 
+  transform: rotate(35deg); 
+
 }
