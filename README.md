@@ -85,13 +85,7 @@ Loreto Ñancucheo - [@loretonancucheo](https://twitter.com/loretonancucheo) - lo
 
 ### Support Me
 
-
-
-
-<div style='display: flex;'>
- <img src= 'https://bmc-dev.s3.us-east-2.amazonaws.com/assets/icons/bmc_icon_black.png' style= "height: 20px; margin-right: 10px"/>
-    
 [Buy me a coffe](https://www.buymeacoffee.com/loretonancucheo) 
-</div> 
+
 
 Thanks :heart:
