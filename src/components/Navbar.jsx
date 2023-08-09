@@ -1,12 +1,14 @@
-import React, { useState } from "react";
+import React, { useContext, useState } from "react";
+import { CourseContext } from "../context/CourseContext";
 
-export const Navbar = ({title, setTitle, handleReset}) => {
+export const Navbar = () => {
+  const { title, setTitle } = useContext(CourseContext);
+
   const [isMenuOpen, setIsMenuOpen] = useState(false);
 
   const toggleMenu = () => {
     setIsMenuOpen(!isMenuOpen);
   };
-
 
   return (
     <nav className="border-gray-200 bg-gray-50 dark:bg-gray-800 dark:border-gray-700 mb-2">
@@ -51,7 +53,7 @@ export const Navbar = ({title, setTitle, handleReset}) => {
                 className="block py-2 pl-3 pr-4 text-gray-900 rounded hover:bg-gray-100 dark:text-gray-400 dark:hover:bg-gray-700 dark:hover:text-white"
                 onClick={() => {
                   setTitle("Malla Nueva");
-                  handleReset()
+                  handleReset();
                   toggleMenu();
                 }}
               >
@@ -64,7 +66,7 @@ export const Navbar = ({title, setTitle, handleReset}) => {
                 onClick={() => {
                   setTitle("Malla Antigua");
                   toggleMenu();
-                  handleReset()
+                  handleReset();
                 }}
               >
                 Malla antigua

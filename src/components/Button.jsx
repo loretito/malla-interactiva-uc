@@ -1,6 +1,8 @@
-import React from "react";
+import React, { useContext } from "react";
+import { CourseContext } from "../context/CourseContext";
 
-export const Button = ({ handleReset }) => {
+export const Button = () => {
+  const { handleReset } = useContext(CourseContext);
   return (
     <button
       type="button"
