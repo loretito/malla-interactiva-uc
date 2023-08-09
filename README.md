@@ -96,7 +96,10 @@ yarn build
 - [x] Select/Unselect a course
 - [x] Select/Unselect by semestrer
 - [ ] Select/Unselect by year
-- [ ] s
+- [x] Unlock courses as prerequisites are met
+- [x] Display the percentage of approved courses/credits
+- [x] Switch between the old and new university curriculum
+- [x] Store selections in localStorage
 
 ## Contributions
 
