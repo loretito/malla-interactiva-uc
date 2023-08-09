@@ -64,7 +64,7 @@ function App() {
           </div>
         </div>
       </div>
-      <div className="flex lg:justify-center max-w-full overflow-x-auto">
+      <div className="flex xl:justify-center overflow-x-auto">
         {Object.entries(coursesBySemesterAndYear).map(
           ([year, coursesBySemester]) => (
             <div key={year} className="">
@@ -91,7 +91,9 @@ function App() {
 
       <div className="flex  my-4 items-center mx-auto justify-center">
         <div className="w-80 text-justify sm:block hidden mr-16">
-          Puedes tachar tus ramos aprobados haciendo click en ellos. A medida que vas aprobando ramos, se van liberando los que tienen prerrequisitos
+          Puedes tachar tus ramos aprobados haciendo click en ellos. A medida
+          que vas aprobando ramos, se van liberando los que tienen
+          prerrequisitos
         </div>
         <div className="w-80 ">
           <img src="/course-info.png" />
