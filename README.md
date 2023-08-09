@@ -11,9 +11,8 @@
   </p>
 </div>
 
-
 <details>
-  <summary>Table of Contents</summary>
+<summary>Table of Contents</summary>
   <ol>
     <li>
       <a href="#about-the-project">About The Project</a>
@@ -22,9 +21,14 @@
       </ul>
     </li>
     <li>
-        <a href="#installation">Installation</a>
+        <a href="#getting-started">Getting Started</a>
+        <ul>
+        <li><a href="#prerequisites">Prerequisites</a></li>
+        <li><a href="#installation">Installation</a></li>
+      </ul>
     </li>
     <li><a href="#roadmap">Roadmap</a></li>
+    <li><a href="#contributions">Contributions</a></li>
     <li><a href="#acknowledgments">Acknowledgments</a></li>
     <li><a href="#contact">Contact</a>
         <ul>
@@ -43,41 +47,77 @@ This is an app that has an interactive university curriculum for the degree in s
 
 ### Built With
 
-Frameworks/libraries used in this project
+<div style="display: flex; gap: 4px;">
+  <a href='https://vitejs.dev/'>
+  <img src="https://img.shields.io/badge/vite-%23646CFF.svg?style=for-the-badge&logo=vite&logoColor=white" alt="Vite" />
+  </a>
+  <a href='https://react.dev/'>
+  <img src="https://img.shields.io/badge/react-%2320232a.svg?style=for-the-badge&logo=react&logoColor=%2361DAFB" alt="React" />
+  </a>
+  <a href='https://tailwindcss.com/'>
+  <img src="https://img.shields.io/badge/tailwindcss-%2338B2AC.svg?style=for-the-badge&logo=tailwind-css&logoColor=white" alt="Tailwind CSS" />
+  </a>
+</div>
 
+## Getting Started
 
-* [React](https://react.dev/)
-* [Vite](https://vitejs.dev/)
-* [Tailwindcss](https://tailwindcss.com/)
+### Prerequisites
 
+- [Yarn](https://classic.yarnpkg.com/en/)
 
-## Installation
-
-Install my project with npm
+### Installation
 
 1. Clone the repo
+
 ```bash
-https://github.com/loretito/malla-interactiva-uc.git
+https://github.com/loretito/malla-interactiva-uc
 ```
 
 2. Install packages
+
 ```bash
-yarn 
+yarn
 ```
 
-3. Run 
+3. Run
+
 ```bash
 yarn dev
 ```
 
+4. Build for production
 
-## Acknowledgements
+```bash
+yarn build
+```
 
-* [FlowBite](https://flowbite.com/)
-* [TablerIcons](https://tablericons.com/)
+## Roadmap
 
+- [x] Select/Unselect a course
+- [x] Select/Unselect by semestrer
+- [ ] Select/Unselect by year
+- [ ] s
 
+## Contributions
 
+If you have a suggestion that would make this better, please fork the repo and create a pull request. You can also simply open an issue with the following tags:
+
+- `bug` (for reporting errors or bugs in the code)
+- `enhancement` (for suggesting new features or improvements to existing functionality)
+- `documentation` (for issues related to the project's documentation)
+- `question` (for asking questions)
+
+Follow thw steps bellow to contribute:
+
+1. Fork the Project
+2. Create your Feature Branch (`git checkout -b feature/FeaturesName`)
+3. Commit the Changes (`git commit -m "Add some FeatureName`)
+4. Push to the Branch (`git push origin feature/FeaturesName`)
+
+## Acknowledgments
+
+- [Flowbite](https://flowbite.com/)
+- [Google Fonts](https://fonts.google.com/)
 
 ## Contact
 
@@ -85,7 +125,8 @@ Loreto Ñancucheo - [@loretonancucheo](https://twitter.com/loretonancucheo) - lo
 
 ### Support Me
 
-[Buy me a coffe](https://www.buymeacoffee.com/loretonancucheo) 
+<a href='https://www.buymeacoffee.com/loretonancucheo' target="_blank"><img src='https://cdn.buymeacoffee.com/buttons/v2/default-yellow.png' height='45' alt='buymeacoffe-loreto'/></a>
 
+Don't forget to give the project a star!
 
 Thanks :heart:
