@@ -2,7 +2,7 @@ import React, { useContext, useState } from "react";
 import { CourseContext } from "../context/CourseContext";
 
 export const Navbar = () => {
-  const { title, setTitle } = useContext(CourseContext);
+  const { title, setTitle, handleReset } = useContext(CourseContext);
 
   const [isMenuOpen, setIsMenuOpen] = useState(false);
 

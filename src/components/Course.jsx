@@ -1,12 +1,10 @@
-import React, { useEffect, useState } from "react";
+import React, { useContext, useEffect, useState } from "react";
+import { CourseContext } from "../context/CourseContext";
 
-export const Course = ({
-  course,
-  finishedCourses,
-  setFinishedCourses,
-  setTotalCredits,
-  totalCredits,
-}) => {
+export const Course = ({ course }) => {
+  const { finishedCourses, totalCredits, handleClick } =
+    useContext(CourseContext);
+
   const [takeCourse, setTakeCourse] = useState(false);
 
   useEffect(() => {
@@ -23,7 +21,7 @@ export const Course = ({
     } else {
       setTakeCourse(reqCheck);
     }
-  }, [course.req, finishedCourses]);
+  }, [finishedCourses]);
 
   const isFinished = finishedCourses.includes(course.id);
   let color = "bg-[#F0F0F0]";
@@ -31,28 +29,12 @@ export const Course = ({
     color = "bg-[#CCDFF6]";
   }
 
-  const handleClick = () => {
-    if (!isFinished) {
-      if (course.cr) setTotalCredits(state => state + course.cr);
-
-      setFinishedCourses(prevFinishedCourses => [
-        ...prevFinishedCourses,
-        course.id,
-      ]);
-    } else {
-      if (course.cr) setTotalCredits(state => state - course.cr);
-      setFinishedCourses(prevFinishedCourses =>
-        prevFinishedCourses.filter(id => id != course.id)
-      );
-    }
-  };
-
   return (
     <div
       className={`w-32 bg-gray-600 mb-2 rounded-lg hover:cursor-pointer ${
         isFinished ? "custom-line" : ""
       } ${!takeCourse ? "opacity-25" : ""} mx-1`}
-      onClick={handleClick}
+      onClick={() => handleClick(course)}
     >
       <div className="flex justify-between items-center h-6">
         <p className="text-white font-bold text-xs pl-1">{course.code}</p>

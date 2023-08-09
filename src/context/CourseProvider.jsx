@@ -17,6 +17,7 @@ export const CourseProvider = ({ children }) => {
   // use malla selected
   const data = title === "Malla Nueva" ? ramos2023 : ramos2016;
 
+  // divide courses by semester
   const coursesBySemesterAndYear = data.reduce((acc, course) => {
     const { year, semester } = course;
     if (!acc[year]) {
@@ -29,18 +30,40 @@ export const CourseProvider = ({ children }) => {
     return acc;
   }, {});
 
+  //To store finishedCourse and credits
   useEffect(() => {
     localStorage.setItem("finishedCourses", JSON.stringify(finishedCourses));
     localStorage.setItem("credits", JSON.stringify(totalCredits));
   }, [finishedCourses]);
 
+  //Store the title
   useEffect(() => {
     localStorage.setItem("stored", JSON.stringify(title));
   }, [title]);
 
+  //To reset everything
   const handleReset = () => {
     setTotalCredits(0);
     setFinishedCourses([]);
+  };
+
+  //TAKE A COURSE
+
+  const handleClick = course => {
+    const isFinished = finishedCourses.includes(course.id);
+    if (!isFinished) {
+      if (course.cr) setTotalCredits(state => state + course.cr);
+
+      setFinishedCourses(prevFinishedCourses => [
+        ...prevFinishedCourses,
+        course.id,
+      ]);
+    } else {
+      if (course.cr) setTotalCredits(state => state - course.cr);
+      setFinishedCourses(prevFinishedCourses =>
+        prevFinishedCourses.filter(id => id != course.id)
+      );
+    }
   };
 
   return (
@@ -54,6 +77,7 @@ export const CourseProvider = ({ children }) => {
         finishedCourses,
         setFinishedCourses,
         coursesBySemesterAndYear,
+        handleClick,
       }}
     >
       {children}
