@@ -392,8 +392,8 @@ export const ramos2016 = [
     cc: FON,
     cr: 5,
     req: [
-      { id: 27, cc: FON },
       { id: 28, cc: FON },
+      { id: 32, cc: FON }
     ],
   },
   {
@@ -406,7 +406,7 @@ export const ramos2016 = [
     cr: 5,
     req: [
       { id: 23, cc: MEF },
-      { id: 27, cc: FON },
+      { id: 28, cc: FON },
       { id: 30, cc: MEF },
     ],
   },
@@ -419,7 +419,7 @@ export const ramos2016 = [
     cc: FON,
     cr: 10,
     req: [
-      { id: 27, cc: FON },
+      { id: 28, cc: FON },
       { id: 30, cc: MEF },
     ],
   },
