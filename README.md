@@ -124,7 +124,7 @@ Follow thw steps bellow to contribute:
 
 ## Contact
 
-Loreto Ñancucheo - [@loretonancucheo](https://twitter.com/loretonancucheo) - loreto.nancucheo@gmail.com
+Loreto Ñancucheo - [@loretonancucheo](https://loretonancucheo.com) - loreto.nancucheo@gmail.com
 
 ### Support Me
 

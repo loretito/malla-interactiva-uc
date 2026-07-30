@@ -1,86 +1,199 @@
-import React, { useEffect, useState } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 import { CourseContext } from "./CourseContext";
 import { ramos2016, ramos2023 } from "../utils";
 
-//get info from localStorage
-const storedFinishedCourses =
-  JSON.parse(localStorage.getItem("finishedCourses")) || [];
-const credits = JSON.parse(localStorage.getItem("credits")) || 0;
-const stored = JSON.parse(localStorage.getItem("stored")) || "Malla Nueva";
+const readJson = (key, fallback) => {
+  try {
+    const raw = localStorage.getItem(key);
+    return raw == null ? fallback : JSON.parse(raw);
+  } catch {
+    return fallback;
+  }
+};
+
+const storedFinishedCourses = readJson("finishedCourses", []);
+const credits = readJson("credits", 0);
+const stored = readJson("stored", "Malla Nueva");
+const storedShowPrerequisites = readJson("showPrerequisites", true);
+const storedEditMode = readJson("editMode", false);
+
+const EMPTY_RELATION_IDS = {
+  relatedCourseIds: new Set(),
+  prereqIds: new Set(),
+  unlockIds: new Set(),
+};
 
 export const CourseProvider = ({ children }) => {
-  //set info from localStorage
   const [finishedCourses, setFinishedCourses] = useState(storedFinishedCourses);
   const [totalCredits, setTotalCredits] = useState(credits);
   const [title, setTitle] = useState(stored);
+  const [highlightedCourseId, setHighlightedCourseId] = useState(null);
+  const [showPrerequisites, setShowPrerequisites] = useState(
+    storedShowPrerequisites
+  );
+  const [editMode, setEditMode] = useState(storedEditMode);
 
-  // use malla selected
-  const data = title === "Malla Nueva" ? ramos2023 : ramos2016;
+  const courses = title === "Malla Nueva" ? ramos2023 : ramos2016;
 
-  // divide courses by semester
-  const coursesBySemesterAndYear = data.reduce((acc, course) => {
-    const { year, semester } = course;
-    if (!acc[year]) {
-      acc[year] = {};
+  const coursesById = useMemo(() => {
+    const map = new Map();
+    courses.forEach(course => map.set(course.id, course));
+    return map;
+  }, [courses]);
+
+  const coursesBySemesterAndYear = useMemo(
+    () =>
+      courses.reduce((acc, course) => {
+        const { year, semester } = course;
+        if (!acc[year]) {
+          acc[year] = {};
+        }
+        if (!acc[year][semester]) {
+          acc[year][semester] = [];
+        }
+        acc[year][semester].push(course);
+        return acc;
+      }, {}),
+    [courses]
+  );
+
+  const dependentsById = useMemo(() => {
+    const map = {};
+    courses.forEach(course => {
+      course.req.forEach(req => {
+        if (!map[req.id]) {
+          map[req.id] = [];
+        }
+        map[req.id].push(course.id);
+      });
+    });
+    return map;
+  }, [courses]);
+
+  const { relatedCourseIds, prereqIds, unlockIds } = useMemo(() => {
+    if (!showPrerequisites || highlightedCourseId == null) {
+      return EMPTY_RELATION_IDS;
     }
-    if (!acc[year][semester]) {
-      acc[year][semester] = [];
-    }
-    acc[year][semester].push(course);
-    return acc;
-  }, {});
 
-  //To store finishedCourse and credits
+    const highlighted = coursesById.get(highlightedCourseId);
+    if (!highlighted) {
+      return EMPTY_RELATION_IDS;
+    }
+
+    const nextPrereqIds = new Set(highlighted.req.map(req => req.id));
+    const nextUnlockIds = new Set(dependentsById[highlightedCourseId] || []);
+    const nextRelatedCourseIds = new Set([...nextPrereqIds, ...nextUnlockIds]);
+
+    return {
+      relatedCourseIds: nextRelatedCourseIds,
+      prereqIds: nextPrereqIds,
+      unlockIds: nextUnlockIds,
+    };
+  }, [highlightedCourseId, coursesById, dependentsById, showPrerequisites]);
+
   useEffect(() => {
     localStorage.setItem("finishedCourses", JSON.stringify(finishedCourses));
     localStorage.setItem("credits", JSON.stringify(totalCredits));
-  }, [finishedCourses]);
+  }, [finishedCourses, totalCredits]);
 
-  //Store the title
   useEffect(() => {
     localStorage.setItem("stored", JSON.stringify(title));
   }, [title]);
 
-  //To reset everything
-  const handleReset = () => {
+  useEffect(() => {
+    localStorage.setItem(
+      "showPrerequisites",
+      JSON.stringify(showPrerequisites)
+    );
+  }, [showPrerequisites]);
+
+  useEffect(() => {
+    localStorage.setItem("editMode", JSON.stringify(editMode));
+  }, [editMode]);
+
+  useEffect(() => {
+    setHighlightedCourseId(null);
+  }, [title]);
+
+  useEffect(() => {
+    if (!showPrerequisites) {
+      setHighlightedCourseId(null);
+    }
+  }, [showPrerequisites]);
+
+  const handleReset = useCallback(() => {
     setTotalCredits(0);
     setFinishedCourses([]);
-  };
+  }, []);
 
-  //TAKE A COURSE
+  const handleClick = useCallback(course => {
+    setFinishedCourses(prevFinishedCourses => {
+      const isFinished = prevFinishedCourses.includes(course.id);
 
-  const handleClick = course => {
-    const isFinished = finishedCourses.includes(course.id);
-    if (!isFinished) {
-      if (course.cr) setTotalCredits(state => state + course.cr);
+      if (!isFinished) {
+        if (course.cr) {
+          setTotalCredits(state => state + course.cr);
+        }
+        return [...prevFinishedCourses, course.id];
+      }
 
-      setFinishedCourses(prevFinishedCourses => [
-        ...prevFinishedCourses,
-        course.id,
-      ]);
-    } else {
-      if (course.cr) setTotalCredits(state => state - course.cr);
-      setFinishedCourses(prevFinishedCourses =>
-        prevFinishedCourses.filter(id => id != course.id)
-      );
-    }
-  };
+      if (course.cr) {
+        setTotalCredits(state => state - course.cr);
+      }
+      return prevFinishedCourses.filter(id => id !== course.id);
+    });
+  }, []);
+
+  const toggleShowPrerequisites = useCallback(() => {
+    setShowPrerequisites(prev => !prev);
+  }, []);
+
+  const value = useMemo(
+    () => ({
+      title,
+      setTitle,
+      handleReset,
+      totalCredits,
+      setTotalCredits,
+      finishedCourses,
+      setFinishedCourses,
+      coursesBySemesterAndYear,
+      handleClick,
+      courses,
+      coursesById,
+      highlightedCourseId,
+      setHighlightedCourseId,
+      dependentsById,
+      relatedCourseIds,
+      prereqIds,
+      unlockIds,
+      showPrerequisites,
+      setShowPrerequisites,
+      toggleShowPrerequisites,
+      editMode,
+      setEditMode,
+    }),
+    [
+      title,
+      handleReset,
+      totalCredits,
+      finishedCourses,
+      coursesBySemesterAndYear,
+      handleClick,
+      courses,
+      coursesById,
+      highlightedCourseId,
+      dependentsById,
+      relatedCourseIds,
+      prereqIds,
+      unlockIds,
+      showPrerequisites,
+      toggleShowPrerequisites,
+      editMode,
+    ]
+  );
 
   return (
-    <CourseContext.Provider
-      value={{
-        title,
-        setTitle,
-        handleReset,
-        totalCredits,
-        setTotalCredits,
-        finishedCourses,
-        setFinishedCourses,
-        coursesBySemesterAndYear,
-        handleClick,
-      }}
-    >
-      {children}
-    </CourseContext.Provider>
+    <CourseContext.Provider value={value}>{children}</CourseContext.Provider>
   );
 };
