@@ -69,7 +69,7 @@ export const Navbar = () => {
                   handleReset();
                 }}
               >
-                Malla antigua
+                Malla Antigua
               </div>
             </li>
           </ul>

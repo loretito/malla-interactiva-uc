@@ -1,16 +1,23 @@
-import { useContext } from "react";
+import { useContext, useRef } from "react";
 import { CourseContext } from "../context/CourseContext";
-import { Semesters } from "../components";
+import { Semesters } from "./Semesters";
+import { CourseArrows } from "./CourseArrows";
 
 export const Malla = () => {
   const { coursesBySemesterAndYear, handleClick } = useContext(CourseContext);
+  const containerRef = useRef(null);
 
-  const handleYearClick = (year) => {
-    Object.values(coursesBySemesterAndYear[year]).flat().forEach(course => handleClick(course));
+  const handleYearClick = year => {
+    Object.values(coursesBySemesterAndYear[year])
+      .flat()
+      .forEach(course => handleClick(course));
   };
 
   return (
-    <div className="flex xl:justify-center overflow-x-auto">
+    <div
+      ref={containerRef}
+      className="relative flex xl:justify-center overflow-x-auto"
+    >
       {Object.entries(coursesBySemesterAndYear).map(
         ([year, coursesBySemester]) => (
           <div key={year} className="">
@@ -32,6 +39,7 @@ export const Malla = () => {
           </div>
         )
       )}
+      <CourseArrows containerRef={containerRef} />
     </div>
   );
 };
