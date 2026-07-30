@@ -4,7 +4,8 @@ import { Semesters } from "./Semesters";
 import { CourseArrows } from "./CourseArrows";
 
 export const Malla = () => {
-  const { coursesBySemesterAndYear, handleClick } = useContext(CourseContext);
+  const { coursesBySemesterAndYear, handleClick, showPrerequisites } =
+    useContext(CourseContext);
   const containerRef = useRef(null);
 
   const handleYearClick = year => {
@@ -39,7 +40,7 @@ export const Malla = () => {
           </div>
         )
       )}
-      <CourseArrows containerRef={containerRef} />
+      {showPrerequisites && <CourseArrows containerRef={containerRef} />}
     </div>
   );
 };

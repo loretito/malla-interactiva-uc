@@ -15,6 +15,7 @@ export const Course = ({ course }) => {
     relatedCourseIds,
     prereqIds,
     unlockIds,
+    showPrerequisites,
   } = useContext(CourseContext);
 
   const [takeCourse, setTakeCourse] = useState(false);
@@ -75,16 +76,17 @@ export const Course = ({ course }) => {
   }
 
   const handleMouseEnter = () => {
-    if (!isMouseHoverAllowed()) return;
+    if (!showPrerequisites || !isMouseHoverAllowed()) return;
     setHighlightedCourseId(course.id);
   };
 
   const handleMouseLeave = () => {
-    if (!isMouseHoverAllowed()) return;
+    if (!showPrerequisites || !isMouseHoverAllowed()) return;
     setHighlightedCourseId(null);
   };
 
   const handleTouchStart = event => {
+    if (!showPrerequisites) return;
     suppressMouseHover();
     const touch = event.touches[0];
     touchStart.current = { x: touch.clientX, y: touch.clientY };

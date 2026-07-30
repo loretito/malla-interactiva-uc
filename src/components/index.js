@@ -4,6 +4,8 @@ export * from "./CourseArrows";
 export * from "./Footer";
 export * from "./Navbar";
 export * from "./Semesters";
+export * from "./SettingsMenu";
 export * from "./Stats";
 export * from "./Info";
 export * from "./Malla";
+export * from "./WhatsNewModal";

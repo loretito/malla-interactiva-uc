@@ -2,10 +2,20 @@ import { useCallback, useEffect, useMemo, useState } from "react";
 import { CourseContext } from "./CourseContext";
 import { ramos2016, ramos2023 } from "../utils";
 
-const storedFinishedCourses =
-  JSON.parse(localStorage.getItem("finishedCourses")) || [];
-const credits = JSON.parse(localStorage.getItem("credits")) || 0;
-const stored = JSON.parse(localStorage.getItem("stored")) || "Malla Nueva";
+const readJson = (key, fallback) => {
+  try {
+    const raw = localStorage.getItem(key);
+    return raw == null ? fallback : JSON.parse(raw);
+  } catch {
+    return fallback;
+  }
+};
+
+const storedFinishedCourses = readJson("finishedCourses", []);
+const credits = readJson("credits", 0);
+const stored = readJson("stored", "Malla Nueva");
+const storedShowPrerequisites = readJson("showPrerequisites", true);
+const storedEditMode = readJson("editMode", false);
 
 const EMPTY_RELATION_IDS = {
   relatedCourseIds: new Set(),
@@ -18,6 +28,10 @@ export const CourseProvider = ({ children }) => {
   const [totalCredits, setTotalCredits] = useState(credits);
   const [title, setTitle] = useState(stored);
   const [highlightedCourseId, setHighlightedCourseId] = useState(null);
+  const [showPrerequisites, setShowPrerequisites] = useState(
+    storedShowPrerequisites
+  );
+  const [editMode, setEditMode] = useState(storedEditMode);
 
   const courses = title === "Malla Nueva" ? ramos2023 : ramos2016;
 
@@ -57,7 +71,7 @@ export const CourseProvider = ({ children }) => {
   }, [courses]);
 
   const { relatedCourseIds, prereqIds, unlockIds } = useMemo(() => {
-    if (highlightedCourseId == null) {
+    if (!showPrerequisites || highlightedCourseId == null) {
       return EMPTY_RELATION_IDS;
     }
 
@@ -75,7 +89,7 @@ export const CourseProvider = ({ children }) => {
       prereqIds: nextPrereqIds,
       unlockIds: nextUnlockIds,
     };
-  }, [highlightedCourseId, coursesById, dependentsById]);
+  }, [highlightedCourseId, coursesById, dependentsById, showPrerequisites]);
 
   useEffect(() => {
     localStorage.setItem("finishedCourses", JSON.stringify(finishedCourses));
@@ -87,8 +101,25 @@ export const CourseProvider = ({ children }) => {
   }, [title]);
 
   useEffect(() => {
+    localStorage.setItem(
+      "showPrerequisites",
+      JSON.stringify(showPrerequisites)
+    );
+  }, [showPrerequisites]);
+
+  useEffect(() => {
+    localStorage.setItem("editMode", JSON.stringify(editMode));
+  }, [editMode]);
+
+  useEffect(() => {
     setHighlightedCourseId(null);
   }, [title]);
+
+  useEffect(() => {
+    if (!showPrerequisites) {
+      setHighlightedCourseId(null);
+    }
+  }, [showPrerequisites]);
 
   const handleReset = useCallback(() => {
     setTotalCredits(0);
@@ -113,6 +144,10 @@ export const CourseProvider = ({ children }) => {
     });
   }, []);
 
+  const toggleShowPrerequisites = useCallback(() => {
+    setShowPrerequisites(prev => !prev);
+  }, []);
+
   const value = useMemo(
     () => ({
       title,
@@ -132,6 +167,11 @@ export const CourseProvider = ({ children }) => {
       relatedCourseIds,
       prereqIds,
       unlockIds,
+      showPrerequisites,
+      setShowPrerequisites,
+      toggleShowPrerequisites,
+      editMode,
+      setEditMode,
     }),
     [
       title,
@@ -147,6 +187,9 @@ export const CourseProvider = ({ children }) => {
       relatedCourseIds,
       prereqIds,
       unlockIds,
+      showPrerequisites,
+      toggleShowPrerequisites,
+      editMode,
     ]
   );
 
