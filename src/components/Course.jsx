@@ -16,6 +16,13 @@ export const Course = ({ course }) => {
     prereqIds,
     unlockIds,
     showPrerequisites,
+    editMode,
+    isInternado,
+    reorderInternado,
+    draggingInternadoId,
+    setDraggingInternadoId,
+    dragOverInternadoId,
+    setDragOverInternadoId,
   } = useContext(CourseContext);
 
   const [takeCourse, setTakeCourse] = useState(false);
@@ -23,6 +30,15 @@ export const Course = ({ course }) => {
   const didLongPress = useRef(false);
   const touchStart = useRef({ x: 0, y: 0 });
   const ignoreMouseUntil = useRef(0);
+  const didDrag = useRef(false);
+
+  const canReorder = editMode && isInternado(course);
+  const isDragging = draggingInternadoId === course.id;
+  const isDropTarget =
+    canReorder &&
+    dragOverInternadoId === course.id &&
+    draggingInternadoId != null &&
+    draggingInternadoId !== course.id;
 
   useEffect(() => {
     const isCreditRequired = "rc" in course;
@@ -76,17 +92,17 @@ export const Course = ({ course }) => {
   }
 
   const handleMouseEnter = () => {
-    if (!showPrerequisites || !isMouseHoverAllowed()) return;
+    if (editMode || !showPrerequisites || !isMouseHoverAllowed()) return;
     setHighlightedCourseId(course.id);
   };
 
   const handleMouseLeave = () => {
-    if (!showPrerequisites || !isMouseHoverAllowed()) return;
+    if (editMode || !showPrerequisites || !isMouseHoverAllowed()) return;
     setHighlightedCourseId(null);
   };
 
   const handleTouchStart = event => {
-    if (!showPrerequisites) return;
+    if (editMode || !showPrerequisites) return;
     suppressMouseHover();
     const touch = event.touches[0];
     touchStart.current = { x: touch.clientX, y: touch.clientY };
@@ -99,6 +115,7 @@ export const Course = ({ course }) => {
   };
 
   const handleTouchMove = event => {
+    if (editMode) return;
     const touch = event.touches[0];
     const dx = Math.abs(touch.clientX - touchStart.current.x);
     const dy = Math.abs(touch.clientY - touchStart.current.y);
@@ -112,12 +129,17 @@ export const Course = ({ course }) => {
   };
 
   const handleTouchEnd = () => {
+    if (editMode) return;
     suppressMouseHover();
     clearLongPressTimer();
     setHighlightedCourseId(null);
   };
 
   const handleCourseClick = () => {
+    if (canReorder) {
+      return;
+    }
+
     suppressMouseHover();
     setHighlightedCourseId(null);
 
@@ -126,19 +148,71 @@ export const Course = ({ course }) => {
       return;
     }
 
+    if (didDrag.current) {
+      didDrag.current = false;
+      return;
+    }
+
     handleClick(course);
+  };
+
+  const handleDragStart = event => {
+    if (!canReorder) return;
+    didDrag.current = true;
+    setDraggingInternadoId(course.id);
+    event.dataTransfer.effectAllowed = "move";
+    event.dataTransfer.setData("text/plain", String(course.id));
+  };
+
+  const handleDragOver = event => {
+    if (!canReorder || draggingInternadoId == null) return;
+    event.preventDefault();
+    event.dataTransfer.dropEffect = "move";
+    if (dragOverInternadoId !== course.id) {
+      setDragOverInternadoId(course.id);
+    }
+  };
+
+  const handleDragLeave = () => {
+    if (dragOverInternadoId === course.id) {
+      setDragOverInternadoId(null);
+    }
+  };
+
+  const handleDrop = event => {
+    if (!canReorder) return;
+    event.preventDefault();
+    event.stopPropagation();
+    const fromId = Number(
+      event.dataTransfer.getData("text/plain") || draggingInternadoId
+    );
+    if (fromId && fromId !== course.id) {
+      reorderInternado(fromId, course.id);
+    }
+    setDraggingInternadoId(null);
+    setDragOverInternadoId(null);
+  };
+
+  const handleDragEnd = () => {
+    setDraggingInternadoId(null);
+    setDragOverInternadoId(null);
   };
 
   return (
     <div
       data-course-id={course.id}
-      className={`w-32 bg-gray-600 mb-2 rounded-lg hover:cursor-pointer transition-all duration-200 ${
-        isFinished ? "custom-line" : ""
-      } ${!takeCourse ? "opacity-25" : ""} ${
+      draggable={canReorder}
+      className={`relative w-32 bg-gray-600 mb-2 rounded-lg transition-all duration-200 ${
+        canReorder ? "cursor-grab active:cursor-grabbing" : "hover:cursor-pointer"
+      } ${isFinished ? "custom-line" : ""} ${!takeCourse ? "opacity-25" : ""} ${
         isDimmed ? "course-dimmed" : ""
       } ${isHighlighted ? "course-highlighted" : ""} ${
         isPrereqRelated ? "course-related-prereq" : ""
-      } ${isUnlockRelated ? "course-related-unlock" : ""} mx-1`}
+      } ${isUnlockRelated ? "course-related-unlock" : ""} ${
+        canReorder ? "ring-2 ring-[#2d5699]/70" : ""
+      } ${isDragging ? "opacity-50 scale-95" : ""} ${
+        isDropTarget ? "ring-4 ring-emerald-400" : ""
+      } mx-1`}
       onClick={handleCourseClick}
       onMouseEnter={handleMouseEnter}
       onMouseLeave={handleMouseLeave}
@@ -147,7 +221,18 @@ export const Course = ({ course }) => {
       onTouchEnd={handleTouchEnd}
       onTouchCancel={handleTouchEnd}
       onContextMenu={event => event.preventDefault()}
+      onDragStart={handleDragStart}
+      onDragOver={handleDragOver}
+      onDragLeave={handleDragLeave}
+      onDrop={handleDrop}
+      onDragEnd={handleDragEnd}
     >
+      {canReorder && (
+        <div className="absolute left-1 top-1 z-20 rounded bg-black/40 px-1 text-[9px] font-bold text-white">
+          ⋮⋮
+        </div>
+      )}
+
       <div className="flex justify-between items-center h-6">
         <p className="text-white font-bold text-xs pl-1">{course.code}</p>
         <div className="bg-white course-code mr-1">

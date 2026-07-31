@@ -1,6 +1,13 @@
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { CourseContext } from "./CourseContext";
 import { ramos2016, ramos2023 } from "../utils";
+import {
+  applyInternadoOrder,
+  getDefaultInternadoOrder,
+  isInternado,
+  moveInternadoToTarget,
+  normalizeInternadoOrder,
+} from "../utils/internados";
 
 const readJson = (key, fallback) => {
   try {
@@ -15,7 +22,7 @@ const storedFinishedCourses = readJson("finishedCourses", []);
 const credits = readJson("credits", 0);
 const stored = readJson("stored", "Malla Nueva");
 const storedShowPrerequisites = readJson("showPrerequisites", true);
-const storedEditMode = readJson("editMode", false);
+const storedInternadoOrderByMalla = readJson("internadoOrderByMalla", {});
 
 const EMPTY_RELATION_IDS = {
   relatedCourseIds: new Set(),
@@ -31,9 +38,29 @@ export const CourseProvider = ({ children }) => {
   const [showPrerequisites, setShowPrerequisites] = useState(
     storedShowPrerequisites
   );
-  const [editMode, setEditMode] = useState(storedEditMode);
+  const [editMode, setEditMode] = useState(false);
+  const [internadoOrderByMalla, setInternadoOrderByMalla] = useState(
+    storedInternadoOrderByMalla
+  );
+  const [draftInternadoOrder, setDraftInternadoOrder] = useState(null);
+  const [draggingInternadoId, setDraggingInternadoId] = useState(null);
+  const [dragOverInternadoId, setDragOverInternadoId] = useState(null);
 
-  const courses = title === "Malla Nueva" ? ramos2023 : ramos2016;
+  const baseCourses = title === "Malla Nueva" ? ramos2023 : ramos2016;
+
+  const savedInternadoOrder = useMemo(() => {
+    const storedOrder = internadoOrderByMalla[title];
+    return normalizeInternadoOrder(baseCourses, storedOrder || []);
+  }, [baseCourses, internadoOrderByMalla, title]);
+
+  const activeInternadoOrder = editMode
+    ? draftInternadoOrder || savedInternadoOrder
+    : savedInternadoOrder;
+
+  const courses = useMemo(
+    () => applyInternadoOrder(baseCourses, activeInternadoOrder),
+    [baseCourses, activeInternadoOrder]
+  );
 
   const coursesById = useMemo(() => {
     const map = new Map();
@@ -41,21 +68,36 @@ export const CourseProvider = ({ children }) => {
     return map;
   }, [courses]);
 
-  const coursesBySemesterAndYear = useMemo(
-    () =>
-      courses.reduce((acc, course) => {
-        const { year, semester } = course;
-        if (!acc[year]) {
-          acc[year] = {};
-        }
-        if (!acc[year][semester]) {
-          acc[year][semester] = [];
-        }
-        acc[year][semester].push(course);
-        return acc;
-      }, {}),
-    [courses]
-  );
+  const coursesBySemesterAndYear = useMemo(() => {
+    const grouped = courses.reduce((acc, course) => {
+      const { year, semester } = course;
+      if (!acc[year]) {
+        acc[year] = {};
+      }
+      if (!acc[year][semester]) {
+        acc[year][semester] = [];
+      }
+      acc[year][semester].push(course);
+      return acc;
+    }, {});
+
+    const orderIndex = new Map(
+      activeInternadoOrder.map((id, index) => [id, index])
+    );
+
+    Object.values(grouped).forEach(semesters => {
+      Object.values(semesters).forEach(semesterCourses => {
+        semesterCourses.sort((a, b) => {
+          if (!isInternado(a) || !isInternado(b)) {
+            return 0;
+          }
+          return (orderIndex.get(a.id) ?? 0) - (orderIndex.get(b.id) ?? 0);
+        });
+      });
+    });
+
+    return grouped;
+  }, [courses, activeInternadoOrder]);
 
   const dependentsById = useMemo(() => {
     const map = {};
@@ -91,6 +133,18 @@ export const CourseProvider = ({ children }) => {
     };
   }, [highlightedCourseId, coursesById, dependentsById, showPrerequisites]);
 
+  const hasUnsavedInternadoChanges = useMemo(() => {
+    if (!editMode || !draftInternadoOrder) {
+      return false;
+    }
+    if (draftInternadoOrder.length !== savedInternadoOrder.length) {
+      return true;
+    }
+    return draftInternadoOrder.some(
+      (id, index) => id !== savedInternadoOrder[index]
+    );
+  }, [editMode, draftInternadoOrder, savedInternadoOrder]);
+
   useEffect(() => {
     localStorage.setItem("finishedCourses", JSON.stringify(finishedCourses));
     localStorage.setItem("credits", JSON.stringify(totalCredits));
@@ -108,11 +162,18 @@ export const CourseProvider = ({ children }) => {
   }, [showPrerequisites]);
 
   useEffect(() => {
-    localStorage.setItem("editMode", JSON.stringify(editMode));
-  }, [editMode]);
+    localStorage.setItem(
+      "internadoOrderByMalla",
+      JSON.stringify(internadoOrderByMalla)
+    );
+  }, [internadoOrderByMalla]);
 
   useEffect(() => {
     setHighlightedCourseId(null);
+    setEditMode(false);
+    setDraftInternadoOrder(null);
+    setDraggingInternadoId(null);
+    setDragOverInternadoId(null);
   }, [title]);
 
   useEffect(() => {
@@ -120,6 +181,18 @@ export const CourseProvider = ({ children }) => {
       setHighlightedCourseId(null);
     }
   }, [showPrerequisites]);
+
+  useEffect(() => {
+    setInternadoOrderByMalla(prev => {
+      if (prev[title]?.length) {
+        return prev;
+      }
+      return {
+        ...prev,
+        [title]: getDefaultInternadoOrder(baseCourses),
+      };
+    });
+  }, [title, baseCourses]);
 
   const handleReset = useCallback(() => {
     setTotalCredits(0);
@@ -148,6 +221,52 @@ export const CourseProvider = ({ children }) => {
     setShowPrerequisites(prev => !prev);
   }, []);
 
+  const enterEditMode = useCallback(() => {
+    setDraftInternadoOrder(savedInternadoOrder);
+    setEditMode(true);
+    setHighlightedCourseId(null);
+  }, [savedInternadoOrder]);
+
+  const cancelEditMode = useCallback(() => {
+    setDraftInternadoOrder(null);
+    setDraggingInternadoId(null);
+    setDragOverInternadoId(null);
+    setEditMode(false);
+  }, []);
+
+  const saveEditMode = useCallback(() => {
+    const orderToSave = draftInternadoOrder || savedInternadoOrder;
+    setInternadoOrderByMalla(prev => ({
+      ...prev,
+      [title]: orderToSave,
+    }));
+    setDraftInternadoOrder(null);
+    setDraggingInternadoId(null);
+    setDragOverInternadoId(null);
+    setEditMode(false);
+  }, [draftInternadoOrder, savedInternadoOrder, title]);
+
+  const toggleEditMode = useCallback(() => {
+    if (editMode) {
+      cancelEditMode();
+      return;
+    }
+    enterEditMode();
+  }, [editMode, cancelEditMode, enterEditMode]);
+
+  const reorderInternado = useCallback(
+    (fromId, toId) => {
+      if (!editMode) {
+        return;
+      }
+      setDraftInternadoOrder(prev => {
+        const current = prev || savedInternadoOrder;
+        return moveInternadoToTarget(current, fromId, toId);
+      });
+    },
+    [editMode, savedInternadoOrder]
+  );
+
   const value = useMemo(
     () => ({
       title,
@@ -171,7 +290,17 @@ export const CourseProvider = ({ children }) => {
       setShowPrerequisites,
       toggleShowPrerequisites,
       editMode,
-      setEditMode,
+      toggleEditMode,
+      enterEditMode,
+      cancelEditMode,
+      saveEditMode,
+      hasUnsavedInternadoChanges,
+      reorderInternado,
+      draggingInternadoId,
+      setDraggingInternadoId,
+      dragOverInternadoId,
+      setDragOverInternadoId,
+      isInternado,
     }),
     [
       title,
@@ -190,6 +319,14 @@ export const CourseProvider = ({ children }) => {
       showPrerequisites,
       toggleShowPrerequisites,
       editMode,
+      toggleEditMode,
+      enterEditMode,
+      cancelEditMode,
+      saveEditMode,
+      hasUnsavedInternadoChanges,
+      reorderInternado,
+      draggingInternadoId,
+      dragOverInternadoId,
     ]
   );
 

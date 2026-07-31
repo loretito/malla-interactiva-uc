@@ -12,9 +12,7 @@ const ItemIcon = ({ done = false }) => (
 );
 
 const ListItem = ({ children, done = false, nested = false }) => (
-  <li
-    className={`flex items-center gap-2 ${nested ? "pl-6" : ""}`}
-  >
+  <li className={`flex items-center gap-2 ${nested ? "pl-6" : ""}`}>
     <ItemIcon done={done} />
     <span className="leading-snug">{children}</span>
   </li>
@@ -78,17 +76,29 @@ export const WhatsNewModal = ({ open, onClose }) => {
 
         <ul className="mb-4 inline-flex flex-col items-start space-y-2 text-left text-sm">
           <ListItem done>Ver prerrequisitos</ListItem>
-          <ListItem>Modo edición (aún no listo), el cual permite:</ListItem>
+          <ListItem done>Modo edición, el cual permite:</ListItem>
           <ListItem nested>Visualizar ramos por tipo</ListItem>
           <ListItem nested>
             Editar ramos optativos y opcionales para rellenarlos con el nombre
           </ListItem>
-          <ListItem nested>Ordenar los Internados a preferencia</ListItem>
+          <ListItem nested done>
+            Ordenar los Internados a preferencia
+          </ListItem>
         </ul>
 
         <p className="mb-4 text-sm italic text-gray-600">
           Fecha de término: de aquí a infinito jaja {"<3"}
         </p>
+
+        <div className="flex justify-center">
+          <button
+            type="button"
+            onClick={onClose}
+            className="rounded-md bg-[#2d5699] px-4 py-2 text-sm font-semibold text-white hover:bg-[#1e427a]"
+          >
+            Entendido
+          </button>
+        </div>
       </div>
     </div>
   );

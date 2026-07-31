@@ -1,6 +1,7 @@
 export * from "./Button";
 export * from "./Course";
 export * from "./CourseArrows";
+export * from "./EditModeBanner";
 export * from "./Footer";
 export * from "./Navbar";
 export * from "./Semesters";
