@@ -1,12 +1,12 @@
-import { useCallback, useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { CourseContext } from "./CourseContext";
 import { ramos2016, ramos2023 } from "../utils";
 import {
   applyInternadoOrder,
   getDefaultInternadoOrder,
   isInternado,
-  moveInternadoToTarget,
   normalizeInternadoOrder,
+  swapInternados,
 } from "../utils/internados";
 
 const readJson = (key, fallback) => {
@@ -23,6 +23,7 @@ const credits = readJson("credits", 0);
 const stored = readJson("stored", "Malla Nueva");
 const storedShowPrerequisites = readJson("showPrerequisites", true);
 const storedInternadoOrderByMalla = readJson("internadoOrderByMalla", {});
+const SWAP_HIGHLIGHT_MS = 1400;
 
 const EMPTY_RELATION_IDS = {
   relatedCourseIds: new Set(),
@@ -45,6 +46,8 @@ export const CourseProvider = ({ children }) => {
   const [draftInternadoOrder, setDraftInternadoOrder] = useState(null);
   const [draggingInternadoId, setDraggingInternadoId] = useState(null);
   const [dragOverInternadoId, setDragOverInternadoId] = useState(null);
+  const [recentlySwappedIds, setRecentlySwappedIds] = useState(new Set());
+  const swapHighlightTimer = useRef(null);
 
   const baseCourses = title === "Malla Nueva" ? ramos2023 : ramos2016;
 
@@ -174,7 +177,17 @@ export const CourseProvider = ({ children }) => {
     setDraftInternadoOrder(null);
     setDraggingInternadoId(null);
     setDragOverInternadoId(null);
+    setRecentlySwappedIds(new Set());
   }, [title]);
+
+  useEffect(
+    () => () => {
+      if (swapHighlightTimer.current) {
+        clearTimeout(swapHighlightTimer.current);
+      }
+    },
+    []
+  );
 
   useEffect(() => {
     if (!showPrerequisites) {
@@ -261,8 +274,15 @@ export const CourseProvider = ({ children }) => {
       }
       setDraftInternadoOrder(prev => {
         const current = prev || savedInternadoOrder;
-        return moveInternadoToTarget(current, fromId, toId);
+        return swapInternados(current, fromId, toId);
       });
+      setRecentlySwappedIds(new Set([fromId, toId]));
+      if (swapHighlightTimer.current) {
+        clearTimeout(swapHighlightTimer.current);
+      }
+      swapHighlightTimer.current = setTimeout(() => {
+        setRecentlySwappedIds(new Set());
+      }, SWAP_HIGHLIGHT_MS);
     },
     [editMode, savedInternadoOrder]
   );
@@ -300,6 +320,7 @@ export const CourseProvider = ({ children }) => {
       setDraggingInternadoId,
       dragOverInternadoId,
       setDragOverInternadoId,
+      recentlySwappedIds,
       isInternado,
     }),
     [
@@ -327,6 +348,7 @@ export const CourseProvider = ({ children }) => {
       reorderInternado,
       draggingInternadoId,
       dragOverInternadoId,
+      recentlySwappedIds,
     ]
   );
 

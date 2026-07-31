@@ -75,25 +75,7 @@ export const applyInternadoOrder = (courses, preferredOrder) => {
   );
 };
 
-export const moveInternadoInOrder = (order, courseId, direction) => {
-  const index = order.indexOf(courseId);
-  if (index < 0) {
-    return order;
-  }
-
-  const targetIndex = direction === "up" ? index - 1 : index + 1;
-  if (targetIndex < 0 || targetIndex >= order.length) {
-    return order;
-  }
-
-  const nextOrder = [...order];
-  const current = nextOrder[index];
-  nextOrder[index] = nextOrder[targetIndex];
-  nextOrder[targetIndex] = current;
-  return nextOrder;
-};
-
-export const moveInternadoToTarget = (order, fromId, toId) => {
+export const swapInternados = (order, fromId, toId) => {
   if (fromId === toId) {
     return order;
   }
@@ -105,7 +87,7 @@ export const moveInternadoToTarget = (order, fromId, toId) => {
   }
 
   const nextOrder = [...order];
-  nextOrder.splice(fromIndex, 1);
-  nextOrder.splice(toIndex, 0, fromId);
+  nextOrder[fromIndex] = toId;
+  nextOrder[toIndex] = fromId;
   return nextOrder;
 };

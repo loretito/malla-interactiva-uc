@@ -23,6 +23,7 @@ export const Course = ({ course }) => {
     setDraggingInternadoId,
     dragOverInternadoId,
     setDragOverInternadoId,
+    recentlySwappedIds,
   } = useContext(CourseContext);
 
   const [takeCourse, setTakeCourse] = useState(false);
@@ -39,6 +40,7 @@ export const Course = ({ course }) => {
     dragOverInternadoId === course.id &&
     draggingInternadoId != null &&
     draggingInternadoId !== course.id;
+  const isRecentlySwapped = recentlySwappedIds.has(course.id);
 
   useEffect(() => {
     const isCreditRequired = "rc" in course;
@@ -173,12 +175,6 @@ export const Course = ({ course }) => {
     }
   };
 
-  const handleDragLeave = () => {
-    if (dragOverInternadoId === course.id) {
-      setDragOverInternadoId(null);
-    }
-  };
-
   const handleDrop = event => {
     if (!canReorder) return;
     event.preventDefault();
@@ -198,68 +194,85 @@ export const Course = ({ course }) => {
     setDragOverInternadoId(null);
   };
 
+  const insertionPlaceholder = (
+    <div
+      className="mx-1 mb-2 flex h-24 w-32 items-center justify-center rounded-lg border-2 border-dashed border-amber-500 bg-amber-50 px-2 text-center text-xs font-semibold text-amber-700"
+      aria-hidden="true"
+    >
+      Soltar para intercambiar
+    </div>
+  );
+
   return (
     <div
-      data-course-id={course.id}
-      draggable={canReorder}
-      className={`relative w-32 bg-gray-600 mb-2 rounded-lg transition-all duration-200 ${
-        canReorder ? "cursor-grab active:cursor-grabbing" : "hover:cursor-pointer"
-      } ${isFinished ? "custom-line" : ""} ${!takeCourse ? "opacity-25" : ""} ${
-        isDimmed ? "course-dimmed" : ""
-      } ${isHighlighted ? "course-highlighted" : ""} ${
-        isPrereqRelated ? "course-related-prereq" : ""
-      } ${isUnlockRelated ? "course-related-unlock" : ""} ${
-        canReorder ? "ring-2 ring-[#2d5699]/70" : ""
-      } ${isDragging ? "opacity-50 scale-95" : ""} ${
-        isDropTarget ? "ring-4 ring-emerald-400" : ""
-      } mx-1`}
-      onClick={handleCourseClick}
-      onMouseEnter={handleMouseEnter}
-      onMouseLeave={handleMouseLeave}
-      onTouchStart={handleTouchStart}
-      onTouchMove={handleTouchMove}
-      onTouchEnd={handleTouchEnd}
-      onTouchCancel={handleTouchEnd}
-      onContextMenu={event => event.preventDefault()}
-      onDragStart={handleDragStart}
+      className="w-fit"
       onDragOver={handleDragOver}
-      onDragLeave={handleDragLeave}
       onDrop={handleDrop}
-      onDragEnd={handleDragEnd}
     >
-      {canReorder && (
-        <div className="absolute left-1 top-1 z-20 rounded bg-black/40 px-1 text-[9px] font-bold text-white">
-          ⋮⋮
-        </div>
-      )}
-
-      <div className="flex justify-between items-center h-6">
-        <p className="text-white font-bold text-xs pl-1">{course.code}</p>
-        <div className="bg-white course-code mr-1">
-          <p className="">{course.id}</p>
-        </div>
-      </div>
+      {isDropTarget && insertionPlaceholder}
       <div
-        className={`${color} h-12 flex justify-center items-center text-center w-full `}
+        data-course-id={course.id}
+        draggable={canReorder}
+        className={`relative w-32 bg-gray-600 mb-2 rounded-lg transition-all duration-200 ${
+          canReorder
+            ? "cursor-grab active:cursor-grabbing"
+            : "hover:cursor-pointer"
+        } ${isFinished ? "custom-line" : ""} ${
+          !takeCourse ? "opacity-25" : ""
+        } ${isDimmed ? "course-dimmed" : ""} ${
+          isHighlighted ? "course-highlighted" : ""
+        } ${isPrereqRelated ? "course-related-prereq" : ""} ${
+          isUnlockRelated ? "course-related-unlock" : ""
+        } ${canReorder ? "ring-2 ring-[#2d5699]/70" : ""} ${
+          isDragging ? "opacity-50 scale-95" : ""
+        } ${isDropTarget ? "ring-4 ring-amber-400" : ""} ${
+          isRecentlySwapped ? "ring-4 ring-amber-400 animate-pulse" : ""
+        } mx-1`}
+        onClick={handleCourseClick}
+        onMouseEnter={handleMouseEnter}
+        onMouseLeave={handleMouseLeave}
+        onTouchStart={handleTouchStart}
+        onTouchMove={handleTouchMove}
+        onTouchEnd={handleTouchEnd}
+        onTouchCancel={handleTouchEnd}
+        onContextMenu={event => event.preventDefault()}
+        onDragStart={handleDragStart}
+        onDragEnd={handleDragEnd}
       >
-        <p className="line-clamp text-sm">{course.course}</p>
-      </div>
-      <div className="flex justify-between p-1">
-        <div className="flex justify-start">
-          {course.req.map(r => (
-            <div key={r.id} className={`course-code ${color} mx-0 border`}>
-              <p className="text-xs">{r.id}</p>
-            </div>
-          ))}
+        {canReorder && (
+          <div className="absolute left-1 top-1 z-20 rounded bg-black/40 px-1 text-[9px] font-bold text-white">
+            ⋮⋮
+          </div>
+        )}
+
+        <div className="flex justify-between items-center h-6">
+          <p className="text-white font-bold text-xs pl-1">{course.code}</p>
+          <div className="bg-white course-code mr-1">
+            <p className="">{course.id}</p>
+          </div>
         </div>
-        <div className="flex items-center justify-center">
-          <p
-            className={`${
-              course.cr ? "bg-white" : ""
-            } h-4 w-4 text-center text-xs`}
-          >
-            {course.cr}
-          </p>
+        <div
+          className={`${color} h-12 flex justify-center items-center text-center w-full `}
+        >
+          <p className="line-clamp text-sm">{course.course}</p>
+        </div>
+        <div className="flex justify-between p-1">
+          <div className="flex justify-start">
+            {course.req.map(r => (
+              <div key={r.id} className={`course-code ${color} mx-0 border`}>
+                <p className="text-xs">{r.id}</p>
+              </div>
+            ))}
+          </div>
+          <div className="flex items-center justify-center">
+            <p
+              className={`${
+                course.cr ? "bg-white" : ""
+              } h-4 w-4 text-center text-xs`}
+            >
+              {course.cr}
+            </p>
+          </div>
         </div>
       </div>
     </div>
