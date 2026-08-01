@@ -18,12 +18,56 @@ const readJson = (key, fallback) => {
   }
 };
 
-const storedFinishedCourses = readJson("finishedCourses", []);
-const credits = readJson("credits", 0);
-const stored = readJson("stored", "Malla Nueva");
+const MALLA_NUEVA = "Malla Nueva";
+const MALLA_ANTIGUA = "Malla Antigua";
+const MALLA_TITLES = [MALLA_NUEVA, MALLA_ANTIGUA];
+
+const stored = readJson("stored", MALLA_NUEVA);
 const storedShowPrerequisites = readJson("showPrerequisites", true);
 const storedInternadoOrderByMalla = readJson("internadoOrderByMalla", {});
 const SWAP_HIGHLIGHT_MS = 1400;
+
+const createEmptyProgress = () => ({
+  finishedCourses: [],
+  totalCredits: 0,
+});
+
+const normalizeProgress = progress => ({
+  finishedCourses: Array.isArray(progress?.finishedCourses)
+    ? [...progress.finishedCourses]
+    : [],
+  totalCredits:
+    typeof progress?.totalCredits === "number" ? progress.totalCredits : 0,
+});
+
+const readInitialProgress = () => {
+  const byMalla = readJson("progressByMalla", null);
+  const legacyCourses = readJson("finishedCourses", []);
+  const legacyCredits = readJson("credits", 0);
+  const hasLegacy =
+    (Array.isArray(legacyCourses) && legacyCourses.length > 0) ||
+    legacyCredits > 0;
+
+  const initial = {};
+  MALLA_TITLES.forEach(mallaTitle => {
+    if (byMalla?.[mallaTitle]) {
+      initial[mallaTitle] = normalizeProgress(byMalla[mallaTitle]);
+      return;
+    }
+    if (!byMalla && hasLegacy && mallaTitle === stored) {
+      initial[mallaTitle] = {
+        finishedCourses: [...legacyCourses],
+        totalCredits: legacyCredits,
+      };
+      return;
+    }
+    initial[mallaTitle] = createEmptyProgress();
+  });
+
+  return initial;
+};
+
+const storedProgressByMalla = readInitialProgress();
 
 const EMPTY_RELATION_IDS = {
   relatedCourseIds: new Set(),
@@ -32,8 +76,7 @@ const EMPTY_RELATION_IDS = {
 };
 
 export const CourseProvider = ({ children }) => {
-  const [finishedCourses, setFinishedCourses] = useState(storedFinishedCourses);
-  const [totalCredits, setTotalCredits] = useState(credits);
+  const [progressByMalla, setProgressByMalla] = useState(storedProgressByMalla);
   const [title, setTitle] = useState(stored);
   const [highlightedCourseId, setHighlightedCourseId] = useState(null);
   const [showPrerequisites, setShowPrerequisites] = useState(
@@ -44,12 +87,17 @@ export const CourseProvider = ({ children }) => {
     storedInternadoOrderByMalla
   );
   const [draftInternadoOrder, setDraftInternadoOrder] = useState(null);
+  const [editBaselineOrder, setEditBaselineOrder] = useState(null);
   const [draggingInternadoId, setDraggingInternadoId] = useState(null);
   const [dragOverInternadoId, setDragOverInternadoId] = useState(null);
   const [recentlySwappedIds, setRecentlySwappedIds] = useState(new Set());
   const swapHighlightTimer = useRef(null);
 
-  const baseCourses = title === "Malla Nueva" ? ramos2023 : ramos2016;
+  const baseCourses = title === MALLA_NUEVA ? ramos2023 : ramos2016;
+
+  const currentProgress = progressByMalla[title] || createEmptyProgress();
+  const finishedCourses = currentProgress.finishedCourses;
+  const totalCredits = currentProgress.totalCredits;
 
   const savedInternadoOrder = useMemo(() => {
     const storedOrder = internadoOrderByMalla[title];
@@ -137,21 +185,22 @@ export const CourseProvider = ({ children }) => {
   }, [highlightedCourseId, coursesById, dependentsById, showPrerequisites]);
 
   const hasUnsavedInternadoChanges = useMemo(() => {
-    if (!editMode || !draftInternadoOrder) {
+    if (!editMode || !draftInternadoOrder || !editBaselineOrder) {
       return false;
     }
-    if (draftInternadoOrder.length !== savedInternadoOrder.length) {
+    if (draftInternadoOrder.length !== editBaselineOrder.length) {
       return true;
     }
     return draftInternadoOrder.some(
-      (id, index) => id !== savedInternadoOrder[index]
+      (id, index) => id !== editBaselineOrder[index]
     );
-  }, [editMode, draftInternadoOrder, savedInternadoOrder]);
+  }, [editMode, draftInternadoOrder, editBaselineOrder]);
 
   useEffect(() => {
-    localStorage.setItem("finishedCourses", JSON.stringify(finishedCourses));
-    localStorage.setItem("credits", JSON.stringify(totalCredits));
-  }, [finishedCourses, totalCredits]);
+    localStorage.setItem("progressByMalla", JSON.stringify(progressByMalla));
+    localStorage.removeItem("finishedCourses");
+    localStorage.removeItem("credits");
+  }, [progressByMalla]);
 
   useEffect(() => {
     localStorage.setItem("stored", JSON.stringify(title));
@@ -175,6 +224,7 @@ export const CourseProvider = ({ children }) => {
     setHighlightedCourseId(null);
     setEditMode(false);
     setDraftInternadoOrder(null);
+    setEditBaselineOrder(null);
     setDraggingInternadoId(null);
     setDragOverInternadoId(null);
     setRecentlySwappedIds(new Set());
@@ -207,28 +257,45 @@ export const CourseProvider = ({ children }) => {
     });
   }, [title, baseCourses]);
 
+  const updateProgress = useCallback(
+    updater => {
+      setProgressByMalla(prev => {
+        const current = normalizeProgress(prev[title]);
+        return {
+          ...prev,
+          [title]: updater(current),
+        };
+      });
+    },
+    [title]
+  );
+
   const handleReset = useCallback(() => {
-    setTotalCredits(0);
-    setFinishedCourses([]);
-  }, []);
+    updateProgress(() => createEmptyProgress());
+  }, [updateProgress]);
 
-  const handleClick = useCallback(course => {
-    setFinishedCourses(prevFinishedCourses => {
-      const isFinished = prevFinishedCourses.includes(course.id);
+  const handleClick = useCallback(
+    course => {
+      updateProgress(current => {
+        const courseCredits = course.cr || 0;
 
-      if (!isFinished) {
-        if (course.cr) {
-          setTotalCredits(state => state + course.cr);
+        if (current.finishedCourses.includes(course.id)) {
+          return {
+            finishedCourses: current.finishedCourses.filter(
+              id => id !== course.id
+            ),
+            totalCredits: Math.max(0, current.totalCredits - courseCredits),
+          };
         }
-        return [...prevFinishedCourses, course.id];
-      }
 
-      if (course.cr) {
-        setTotalCredits(state => state - course.cr);
-      }
-      return prevFinishedCourses.filter(id => id !== course.id);
-    });
-  }, []);
+        return {
+          finishedCourses: [...current.finishedCourses, course.id],
+          totalCredits: current.totalCredits + courseCredits,
+        };
+      });
+    },
+    [updateProgress]
+  );
 
   const toggleShowPrerequisites = useCallback(() => {
     setShowPrerequisites(prev => !prev);
@@ -236,16 +303,24 @@ export const CourseProvider = ({ children }) => {
 
   const enterEditMode = useCallback(() => {
     setDraftInternadoOrder(savedInternadoOrder);
+    setEditBaselineOrder(savedInternadoOrder);
     setEditMode(true);
     setHighlightedCourseId(null);
   }, [savedInternadoOrder]);
 
   const cancelEditMode = useCallback(() => {
+    if (editBaselineOrder) {
+      setInternadoOrderByMalla(prev => ({
+        ...prev,
+        [title]: editBaselineOrder,
+      }));
+    }
     setDraftInternadoOrder(null);
+    setEditBaselineOrder(null);
     setDraggingInternadoId(null);
     setDragOverInternadoId(null);
     setEditMode(false);
-  }, []);
+  }, [editBaselineOrder, title]);
 
   const saveEditMode = useCallback(() => {
     const orderToSave = draftInternadoOrder || savedInternadoOrder;
@@ -254,6 +329,7 @@ export const CourseProvider = ({ children }) => {
       [title]: orderToSave,
     }));
     setDraftInternadoOrder(null);
+    setEditBaselineOrder(null);
     setDraggingInternadoId(null);
     setDragOverInternadoId(null);
     setEditMode(false);
@@ -274,7 +350,12 @@ export const CourseProvider = ({ children }) => {
       }
       setDraftInternadoOrder(prev => {
         const current = prev || savedInternadoOrder;
-        return swapInternados(current, fromId, toId);
+        const next = swapInternados(current, fromId, toId);
+        setInternadoOrderByMalla(orders => ({
+          ...orders,
+          [title]: next,
+        }));
+        return next;
       });
       setRecentlySwappedIds(new Set([fromId, toId]));
       if (swapHighlightTimer.current) {
@@ -284,7 +365,7 @@ export const CourseProvider = ({ children }) => {
         setRecentlySwappedIds(new Set());
       }, SWAP_HIGHLIGHT_MS);
     },
-    [editMode, savedInternadoOrder]
+    [editMode, savedInternadoOrder, title]
   );
 
   const value = useMemo(
@@ -293,9 +374,7 @@ export const CourseProvider = ({ children }) => {
       setTitle,
       handleReset,
       totalCredits,
-      setTotalCredits,
       finishedCourses,
-      setFinishedCourses,
       coursesBySemesterAndYear,
       handleClick,
       courses,

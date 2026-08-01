@@ -2,7 +2,7 @@ import { useContext, useState } from "react";
 import { CourseContext } from "../context/CourseContext";
 
 export const Navbar = () => {
-  const { title, setTitle, handleReset } = useContext(CourseContext);
+  const { title, setTitle } = useContext(CourseContext);
   const [isMenuOpen, setIsMenuOpen] = useState(false);
 
   const toggleMenu = () => {
@@ -53,8 +53,7 @@ export const Navbar = () => {
                 className="block py-2 pl-3 pr-4 text-gray-900 rounded hover:bg-gray-100 dark:text-gray-400 dark:hover:bg-gray-700 dark:hover:text-white cursor-pointer"
                 onClick={() => {
                   setTitle("Malla Nueva");
-                  handleReset();
-                  toggleMenu();
+                  setIsMenuOpen(false);
                 }}
               >
                 Malla Nueva
@@ -65,8 +64,7 @@ export const Navbar = () => {
                 className="block py-2 pl-3 pr-4 text-gray-900 rounded hover:bg-gray-100 dark:text-gray-400 dark:hover:bg-gray-700 dark:hover:text-white cursor-pointer"
                 onClick={() => {
                   setTitle("Malla Antigua");
-                  toggleMenu();
-                  handleReset();
+                  setIsMenuOpen(false);
                 }}
               >
                 Malla Antigua

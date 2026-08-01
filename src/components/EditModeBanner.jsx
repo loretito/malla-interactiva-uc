@@ -14,15 +14,36 @@ export const EditModeBanner = () => {
   }
 
   return (
-    <div className="sticky top-0 z-40 mb-2 border-b border-[#2d5699]/30 bg-[#e8f1fb] px-3 py-2 shadow-sm">
+    <div
+      className={`sticky top-0 z-40 mb-2 border-b px-3 py-2 shadow-sm ${
+        hasUnsavedInternadoChanges
+          ? "border-amber-400 bg-amber-100"
+          : "border-[#2d5699]/30 bg-[#e8f1fb]"
+      }`}
+    >
       <div className="mx-auto flex max-w-screen-xl flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
-        <div>
-          <p className="text-sm font-semibold text-[#2d5699]">
-            Estás en modo edición
-          </p>
-          <p className="text-xs text-[#1e427a]">
-            Arrastra los Internados para ordenarlos a tu preferencia.
-            {hasUnsavedInternadoChanges ? " Hay cambios sin guardar." : ""}
+        <div className="min-w-0">
+          <div className="flex flex-wrap items-center gap-2">
+            <p
+              className={`text-sm font-semibold ${
+                hasUnsavedInternadoChanges ? "text-amber-900" : "text-[#2d5699]"
+              }`}
+            >
+              Estás en modo edición
+            </p>
+            {hasUnsavedInternadoChanges && (
+              <span className="inline-flex items-center rounded-full bg-amber-500 px-2.5 py-0.5 text-xs font-bold uppercase tracking-wide text-white shadow-sm">
+                Orden modificado
+              </span>
+            )}
+          </div>
+          <p
+            className={`text-xs ${
+              hasUnsavedInternadoChanges ? "text-amber-800" : "text-[#1e427a]"
+            }`}
+          >
+            Cada intercambio se guarda al instante. Cancelar restaura el orden
+            de cuando entraste a editar.
           </p>
         </div>
         <div className="flex items-center gap-2">
@@ -36,7 +57,11 @@ export const EditModeBanner = () => {
           <button
             type="button"
             onClick={saveEditMode}
-            className="rounded-lg bg-[#2d5699] px-3 py-1.5 text-sm font-semibold text-white hover:bg-[#1e427a]"
+            className={`rounded-lg px-3 py-1.5 text-sm font-semibold text-white ${
+              hasUnsavedInternadoChanges
+                ? "bg-amber-600 hover:bg-amber-700 ring-2 ring-amber-300 ring-offset-1"
+                : "bg-[#2d5699] hover:bg-[#1e427a]"
+            }`}
           >
             Guardar
           </button>

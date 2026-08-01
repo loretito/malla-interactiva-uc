@@ -34,6 +34,7 @@ export const Course = ({ course }) => {
   const didDrag = useRef(false);
 
   const canReorder = editMode && isInternado(course);
+  const isEditDimmed = editMode && !canReorder;
   const isDragging = draggingInternadoId === course.id;
   const isDropTarget =
     canReorder &&
@@ -41,6 +42,17 @@ export const Course = ({ course }) => {
     draggingInternadoId != null &&
     draggingInternadoId !== course.id;
   const isRecentlySwapped = recentlySwappedIds.has(course.id);
+  let editBadgeLabel = "Intercambiable";
+  let editBadgeClass = "";
+  if (isDragging) {
+    editBadgeLabel = "Origen";
+    editBadgeClass = "course-drag-source-badge";
+  } else if (isDropTarget) {
+    editBadgeLabel = "Destino";
+    editBadgeClass = "course-drop-target-badge";
+  } else {
+    editBadgeLabel = "Intercambiable";
+  }
 
   useEffect(() => {
     const isCreditRequired = "rc" in course;
@@ -196,10 +208,10 @@ export const Course = ({ course }) => {
 
   const insertionPlaceholder = (
     <div
-      className="mx-1 mb-2 flex h-24 w-32 items-center justify-center rounded-lg border-2 border-dashed border-amber-500 bg-amber-50 px-2 text-center text-xs font-semibold text-amber-700"
+      className="mx-1 mb-2 flex h-24 w-32 items-center justify-center rounded-lg border-2 border-dashed border-emerald-500 bg-emerald-50 px-2 text-center text-xs font-semibold text-emerald-700"
       aria-hidden="true"
     >
-      Soltar para intercambiar
+      Intercambiar con este
     </div>
   );
 
@@ -215,17 +227,17 @@ export const Course = ({ course }) => {
         draggable={canReorder}
         className={`relative w-32 bg-gray-600 mb-2 rounded-lg transition-all duration-200 ${
           canReorder
-            ? "cursor-grab active:cursor-grabbing"
+            ? "cursor-grab active:cursor-grabbing course-editable"
             : "hover:cursor-pointer"
         } ${isFinished ? "custom-line" : ""} ${
-          !takeCourse ? "opacity-25" : ""
-        } ${isDimmed ? "course-dimmed" : ""} ${
-          isHighlighted ? "course-highlighted" : ""
-        } ${isPrereqRelated ? "course-related-prereq" : ""} ${
-          isUnlockRelated ? "course-related-unlock" : ""
-        } ${canReorder ? "ring-2 ring-[#2d5699]/70" : ""} ${
-          isDragging ? "opacity-50 scale-95" : ""
-        } ${isDropTarget ? "ring-4 ring-amber-400" : ""} ${
+          !takeCourse && !editMode ? "opacity-25" : ""
+        } ${isDimmed && !editMode ? "course-dimmed" : ""} ${
+          isEditDimmed ? "course-edit-dimmed" : ""
+        } ${isHighlighted ? "course-highlighted" : ""} ${
+          isPrereqRelated ? "course-related-prereq" : ""
+        } ${isUnlockRelated ? "course-related-unlock" : ""} ${
+          isDragging ? "course-drag-source scale-95" : ""
+        } ${isDropTarget ? "course-drop-target" : ""} ${
           isRecentlySwapped ? "ring-4 ring-amber-400 animate-pulse" : ""
         } mx-1`}
         onClick={handleCourseClick}
@@ -240,9 +252,16 @@ export const Course = ({ course }) => {
         onDragEnd={handleDragEnd}
       >
         {canReorder && (
-          <div className="absolute left-1 top-1 z-20 rounded bg-black/40 px-1 text-[9px] font-bold text-white">
-            ⋮⋮
-          </div>
+          <>
+            <div
+              className={`course-editable-badge ${editBadgeClass}`}
+            >
+              {editBadgeLabel}
+            </div>
+            <div className="absolute left-1 top-1 z-20 rounded bg-black/45 px-1 text-[9px] font-bold text-white">
+              ⋮⋮
+            </div>
+          </>
         )}
 
         <div className="flex justify-between items-center h-6">
