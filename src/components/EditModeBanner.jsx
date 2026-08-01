@@ -26,7 +26,7 @@ export const EditModeBanner = () => {
             : "border-[#2d5699]/30 bg-[#e8f1fb]"
         }`}
       >
-        <div className="mx-auto flex max-w-screen-xl flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
+        <div className="mx-auto flex max-w-[1360px] flex-col gap-2 px-1 sm:flex-row sm:items-center sm:justify-between">
           <div className="min-w-0">
             <div className="flex flex-wrap items-center gap-2">
               <p

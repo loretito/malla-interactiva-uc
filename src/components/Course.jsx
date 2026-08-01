@@ -2,6 +2,7 @@ import { useContext, useEffect, useRef, useState } from "react";
 import { CourseContext } from "../context/CourseContext";
 
 const LONG_PRESS_MS = 450;
+const HOVER_DELAY_MS = 1000;
 const MOVE_THRESHOLD_PX = 10;
 const MOUSE_SUPPRESS_MS = 900;
 
@@ -28,6 +29,7 @@ export const Course = ({ course }) => {
 
   const [takeCourse, setTakeCourse] = useState(false);
   const longPressTimer = useRef(null);
+  const hoverTimer = useRef(null);
   const didLongPress = useRef(false);
   const touchStart = useRef({ x: 0, y: 0 });
   const ignoreMouseUntil = useRef(0);
@@ -75,6 +77,9 @@ export const Course = ({ course }) => {
       if (longPressTimer.current) {
         clearTimeout(longPressTimer.current);
       }
+      if (hoverTimer.current) {
+        clearTimeout(hoverTimer.current);
+      }
     };
   }, []);
 
@@ -82,6 +87,13 @@ export const Course = ({ course }) => {
     if (longPressTimer.current) {
       clearTimeout(longPressTimer.current);
       longPressTimer.current = null;
+    }
+  };
+
+  const clearHoverTimer = () => {
+    if (hoverTimer.current) {
+      clearTimeout(hoverTimer.current);
+      hoverTimer.current = null;
     }
   };
 
@@ -107,10 +119,15 @@ export const Course = ({ course }) => {
 
   const handleMouseEnter = () => {
     if (editMode || !showPrerequisites || !isMouseHoverAllowed()) return;
-    setHighlightedCourseId(course.id);
+    clearHoverTimer();
+    hoverTimer.current = setTimeout(() => {
+      setHighlightedCourseId(course.id);
+      hoverTimer.current = null;
+    }, HOVER_DELAY_MS);
   };
 
   const handleMouseLeave = () => {
+    clearHoverTimer();
     if (editMode || !showPrerequisites || !isMouseHoverAllowed()) return;
     setHighlightedCourseId(null);
   };
@@ -154,6 +171,7 @@ export const Course = ({ course }) => {
       return;
     }
 
+    clearHoverTimer();
     suppressMouseHover();
     setHighlightedCourseId(null);
 

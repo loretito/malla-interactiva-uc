@@ -19,7 +19,7 @@ function App() {
     <>
       <Navbar />
       <EditModeBanner />
-      <div className="max-w-screen-xl mx-auto px-2">
+      <div className="mx-auto max-w-[1360px] px-1">
         <div className="flex items-center justify-between mb-1">
           <div
             className={
