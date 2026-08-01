@@ -91,7 +91,9 @@ export const CourseProvider = ({ children }) => {
   const [draggingInternadoId, setDraggingInternadoId] = useState(null);
   const [dragOverInternadoId, setDragOverInternadoId] = useState(null);
   const [recentlySwappedIds, setRecentlySwappedIds] = useState(new Set());
+  const [toastMessage, setToastMessage] = useState(null);
   const swapHighlightTimer = useRef(null);
+  const toastTimer = useRef(null);
 
   const baseCourses = title === MALLA_NUEVA ? ramos2023 : ramos2016;
 
@@ -235,6 +237,9 @@ export const CourseProvider = ({ children }) => {
       if (swapHighlightTimer.current) {
         clearTimeout(swapHighlightTimer.current);
       }
+      if (toastTimer.current) {
+        clearTimeout(toastTimer.current);
+      }
     },
     []
   );
@@ -270,9 +275,41 @@ export const CourseProvider = ({ children }) => {
     [title]
   );
 
+  const showToast = useCallback(message => {
+    setToastMessage(message);
+    if (toastTimer.current) {
+      clearTimeout(toastTimer.current);
+    }
+    toastTimer.current = setTimeout(() => {
+      setToastMessage(null);
+    }, 2500);
+  }, []);
+
+  const clearToast = useCallback(() => {
+    if (toastTimer.current) {
+      clearTimeout(toastTimer.current);
+    }
+    setToastMessage(null);
+  }, []);
+
   const handleReset = useCallback(() => {
     updateProgress(() => createEmptyProgress());
   }, [updateProgress]);
+
+  const resetMallaToDefault = useCallback(() => {
+    const defaultOrder = getDefaultInternadoOrder(baseCourses);
+    setInternadoOrderByMalla(prev => ({
+      ...prev,
+      [title]: defaultOrder,
+    }));
+    setDraftInternadoOrder(defaultOrder);
+    setEditBaselineOrder(defaultOrder);
+    setDraggingInternadoId(null);
+    setDragOverInternadoId(null);
+    setRecentlySwappedIds(new Set());
+    setHighlightedCourseId(null);
+    showToast("Se restableció el orden por defecto");
+  }, [title, baseCourses, showToast]);
 
   const handleClick = useCallback(
     course => {
@@ -309,6 +346,14 @@ export const CourseProvider = ({ children }) => {
   }, [savedInternadoOrder]);
 
   const cancelEditMode = useCallback(() => {
+    const hadChanges =
+      draftInternadoOrder &&
+      editBaselineOrder &&
+      (draftInternadoOrder.length !== editBaselineOrder.length ||
+        draftInternadoOrder.some(
+          (id, index) => id !== editBaselineOrder[index]
+        ));
+
     if (editBaselineOrder) {
       setInternadoOrderByMalla(prev => ({
         ...prev,
@@ -320,7 +365,10 @@ export const CourseProvider = ({ children }) => {
     setDraggingInternadoId(null);
     setDragOverInternadoId(null);
     setEditMode(false);
-  }, [editBaselineOrder, title]);
+    if (hadChanges) {
+      showToast("Se descartaron los cambios");
+    }
+  }, [draftInternadoOrder, editBaselineOrder, title, showToast]);
 
   const saveEditMode = useCallback(() => {
     const orderToSave = draftInternadoOrder || savedInternadoOrder;
@@ -333,7 +381,8 @@ export const CourseProvider = ({ children }) => {
     setDraggingInternadoId(null);
     setDragOverInternadoId(null);
     setEditMode(false);
-  }, [draftInternadoOrder, savedInternadoOrder, title]);
+    showToast("Se guardaron los cambios");
+  }, [draftInternadoOrder, savedInternadoOrder, title, showToast]);
 
   const toggleEditMode = useCallback(() => {
     if (editMode) {
@@ -373,6 +422,7 @@ export const CourseProvider = ({ children }) => {
       title,
       setTitle,
       handleReset,
+      resetMallaToDefault,
       totalCredits,
       finishedCourses,
       coursesBySemesterAndYear,
@@ -401,10 +451,13 @@ export const CourseProvider = ({ children }) => {
       setDragOverInternadoId,
       recentlySwappedIds,
       isInternado,
+      toastMessage,
+      clearToast,
     }),
     [
       title,
       handleReset,
+      resetMallaToDefault,
       totalCredits,
       finishedCourses,
       coursesBySemesterAndYear,
@@ -428,6 +481,8 @@ export const CourseProvider = ({ children }) => {
       draggingInternadoId,
       dragOverInternadoId,
       recentlySwappedIds,
+      toastMessage,
+      clearToast,
     ]
   );
 

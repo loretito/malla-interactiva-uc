@@ -145,3 +145,34 @@
 .course-drop-target-badge {
   background: #10b981;
 }
+
+@keyframes toast-appear {
+  0% {
+    opacity: 0;
+    transform: translate(-50%, 20px) scale(0.92);
+  }
+  12% {
+    opacity: 1;
+    transform: translate(-50%, -4px) scale(1.03);
+  }
+  20%,
+  82% {
+    opacity: 1;
+    transform: translate(-50%, 0) scale(1);
+  }
+  100% {
+    opacity: 0;
+    transform: translate(-50%, 10px) scale(0.96);
+  }
+}
+
+.toast-animated {
+  animation: toast-appear 2.5s ease-in-out both;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .toast-animated {
+    animation: none;
+    transform: translateX(-50%);
+  }
+}

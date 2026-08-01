@@ -1,9 +1,9 @@
 import { useEffect } from "react";
 
-const ItemIcon = ({ done = false }) => (
+const ItemIcon = ({ done = false, pending = false }) => (
   <span
     className={`inline-flex h-4 w-4 shrink-0 items-center justify-center rounded-full text-[10px] font-bold leading-none text-white ${
-      done ? "bg-emerald-600" : "bg-gray-400"
+      done ? "bg-emerald-600" : pending ? "bg-amber-400" : "bg-gray-400"
     }`}
     aria-hidden="true"
   >
@@ -11,10 +11,19 @@ const ItemIcon = ({ done = false }) => (
   </span>
 );
 
-const ListItem = ({ children, done = false, nested = false }) => (
+const ListItem = ({
+  children,
+  done = false,
+  pending = false,
+  nested = false,
+}) => (
   <li className={`flex items-center gap-2 ${nested ? "pl-6" : ""}`}>
-    <ItemIcon done={done} />
-    <span className="leading-snug">{children}</span>
+    <ItemIcon done={done} pending={pending} />
+    <span
+      className={`leading-snug ${pending ? "text-amber-700" : ""}`}
+    >
+      {children}
+    </span>
   </li>
 );
 
@@ -76,7 +85,7 @@ export const WhatsNewModal = ({ open, onClose }) => {
 
         <ul className="mb-4 inline-flex flex-col items-start space-y-2 text-left text-sm">
           <ListItem done>Ver prerrequisitos</ListItem>
-          <ListItem done>Modo edición, el cual permite:</ListItem>
+          <ListItem pending>Modo edición, el cual permite:</ListItem>
           <ListItem nested>Visualizar ramos por tipo</ListItem>
           <ListItem nested>
             Editar ramos optativos y opcionales para rellenarlos con el nombre

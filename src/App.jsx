@@ -8,11 +8,12 @@ import {
   Malla,
   SettingsMenu,
   EditModeBanner,
+  Toast,
 } from "./components";
 import { CourseContext } from "./context/CourseContext";
 
 function App() {
-  const { editMode } = useContext(CourseContext);
+  const { editMode, toastMessage, clearToast } = useContext(CourseContext);
 
   return (
     <>
@@ -44,6 +45,7 @@ function App() {
       <Malla />
       <Info />
       <Footer />
+      <Toast message={toastMessage} onClose={clearToast} />
     </>
   );
 }
