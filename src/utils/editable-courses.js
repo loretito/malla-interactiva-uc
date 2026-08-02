@@ -5,6 +5,7 @@ const EDITABLE_COURSE_NAMES = new Set([
   "optativo de profundización",
   "optativo",
   "formación general",
+  "formación teológica",
 ]);
 
 export const isEditableCourse = course => {
