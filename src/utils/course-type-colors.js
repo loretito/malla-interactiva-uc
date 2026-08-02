@@ -1,52 +1,69 @@
-const CC_TO_TYPE = {
-  "bg-[#CCDFF6]": "fon",
-  "bg-[#9BB8E6]": "electivos",
-  "bg-[#80cbda]": "electivos",
-  "bg-[#d2c5a6]": "electivos",
-  "bg-[#71a2ed]": "electivos",
-  "bg-[#21e6c1]": "mef",
-  "bg-[#b9de51]": "bio",
-  "bg-[#ffbd87]": "let",
-  "bg-[#bfe3c0]": "psi",
-  "bg-[#91b9ff]": "mat",
-  "bg-[#ffea79]": "fis",
-  "bg-[#7cf49a]": "qim",
-  "bg-[#d09FFF]": "edu",
-  "bg-[#ffcdab]": "vra",
-  "bg-[#69d2cd]": "int",
-  "bg-[#fdf4b0]": "def",
+const MALLA_NUEVA = "Malla Nueva";
+const MALLA_ANTIGUA = "Malla Antigua";
+
+const COLOR1_CODES_BY_MALLA = {
+  [MALLA_NUEVA]: new Set([
+    "MAT1000",
+    "FIS122F",
+    "FON208A",
+    "BIO141C",
+    "BIO135F",
+    "MEF102A",
+    "MEF105A",
+    "PSI1101",
+    "LET011F",
+  ]),
+  [MALLA_ANTIGUA]: new Set([
+    "MAT1023",
+    "QIM201F",
+    "BIO141C",
+    "MEF101A",
+    "FON101",
+    "PSI1101",
+    "FON102",
+  ]),
+};
+
+const COLOR2_CODES_BY_MALLA = {
+  [MALLA_NUEVA]: new Set([
+    "MEF205A",
+    "MEF201B",
+    "FON101A",
+    "LET012F",
+    "LET015F",
+    "LET013F",
+    "FON204A",
+    "FON207A",
+    "FON203A",
+  ]),
+  [MALLA_ANTIGUA]: new Set([
+    "MEF103A",
+    "BIO135F",
+    "FIS121F",
+    "FON205A",
+    "MEF201A",
+    "MEF203B",
+    "LET003F",
+    "FON301",
+  ]),
 };
 
 export const COURSE_TYPE_LABELS = {
+  color1: "Formación básica",
+  color2: "Licenciatura",
   fon: "Fonoaudiología",
   electivos: "Electivos / Optativos",
-  mef: "Ciencias de la salud",
-  bio: "Biología",
-  let: "Letras / Lingüística",
-  psi: "Psicología",
-  mat: "Matemáticas",
-  fis: "Física / Filosofía",
-  qim: "Química",
-  edu: "Educación",
-  vra: "Formación general UC",
   int: "Internados",
   def: "Proyecto / Defensa",
 };
 
 export const DEFAULT_TYPE_COLORS = {
+  color1: "#E8D9A8",
+  color2: "#A8D4C4",
   fon: "#CCDFF6",
   electivos: "#9BB8E6",
-  mef: "#7EB6D9",
-  bio: "#A8D4C4",
-  let: "#F0C9A8",
-  psi: "#C8D9B8",
-  mat: "#91B9FF",
-  fis: "#F2E4A8",
-  qim: "#B8DDB0",
-  edu: "#D2C4EE",
-  vra: "#FFD8B8",
-  int: "#69D2CD",
-  def: "#F5E8A8",
+  int: "#7BCFC4",
+  def: "#F0E4B8",
 };
 
 export const TYPE_COLOR_PALETTE = [
@@ -67,17 +84,23 @@ export const TYPE_COLOR_PALETTE = [
   { id: "jade", hex: "#A8D4C4", label: "Jade" },
   { id: "musgo", hex: "#C8D9B8", label: "Musgo" },
   { id: "lima", hex: "#B8DDB0", label: "Lima" },
-  { id: "arena", hex: "#F0C9A8", label: "Arena" },
+  { id: "arena", hex: "#E8D9A8", label: "Arena" },
+  { id: "arena-suave", hex: "#F0C9A8", label: "Arena suave" },
   { id: "durazno", hex: "#FFD8B8", label: "Durazno" },
+  { id: "durazno-claro", hex: "#F0D2B8", label: "Durazno claro" },
   { id: "arena-clara", hex: "#FFE4C8", label: "Arena clara" },
-  { id: "trigo", hex: "#F5E8A8", label: "Trigo" },
+  { id: "trigo", hex: "#F0E4B8", label: "Trigo" },
+  { id: "trigo-claro", hex: "#F5E8A8", label: "Trigo claro" },
   { id: "maiz", hex: "#F2E4A8", label: "Maíz" },
   { id: "lavanda", hex: "#D2C4EE", label: "Lavanda" },
   { id: "lila", hex: "#C4B5E8", label: "Lila" },
 ];
 
-export const getCourseTypeKey = course => {
+const normalizeCode = code => String(code || "").trim().toUpperCase();
+
+export const getCourseTypeKey = (course, mallaTitle) => {
   const name = course?.course?.toLowerCase?.().trim?.() || "";
+  const code = normalizeCode(course?.code);
 
   if (name.includes("internado")) {
     return "int";
@@ -94,10 +117,19 @@ export const getCourseTypeKey = course => {
     return "electivos";
   }
 
-  if (!course?.cc) {
-    return "fon";
+  if (name.includes("defensa") || name.includes("proyecto de título")) {
+    return "def";
   }
-  return CC_TO_TYPE[course.cc] || "fon";
+
+  if (COLOR1_CODES_BY_MALLA[mallaTitle]?.has(code)) {
+    return "color1";
+  }
+
+  if (COLOR2_CODES_BY_MALLA[mallaTitle]?.has(code)) {
+    return "color2";
+  }
+
+  return "fon";
 };
 
 export const getCourseTypeLabel = typeKey =>
@@ -138,10 +170,10 @@ export const areTypeColorsEqual = (a, b) => {
   );
 };
 
-export const getTypesInCourses = courses => {
+export const getTypesInCourses = (courses, mallaTitle) => {
   const seen = new Map();
   courses.forEach(course => {
-    const key = getCourseTypeKey(course);
+    const key = getCourseTypeKey(course, mallaTitle);
     if (!seen.has(key)) {
       seen.set(key, getCourseTypeLabel(key));
     }
@@ -152,9 +184,14 @@ export const getTypesInCourses = courses => {
     .map(key => ({ key, label: seen.get(key) }));
 };
 
-export const resolveCourseColor = (course, typeColors, showTypeColors) => {
+export const resolveCourseColor = (
+  course,
+  typeColors,
+  showTypeColors,
+  mallaTitle
+) => {
   if (!showTypeColors) {
-    const typeKey = getCourseTypeKey(course);
+    const typeKey = getCourseTypeKey(course, mallaTitle);
     if (typeKey === "electivos") {
       return DEFAULT_TYPE_COLORS.electivos;
     }
@@ -165,6 +202,6 @@ export const resolveCourseColor = (course, typeColors, showTypeColors) => {
   }
 
   const colors = normalizeTypeColors(typeColors);
-  const typeKey = getCourseTypeKey(course);
+  const typeKey = getCourseTypeKey(course, mallaTitle);
   return colors[typeKey] || DEFAULT_TYPE_COLORS.fon;
 };

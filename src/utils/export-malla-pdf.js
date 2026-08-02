@@ -248,6 +248,7 @@ export const exportMallaPdf = async ({
   activeTypeColors,
   showTypeColors = false,
   includeMarkedCourses = false,
+  mallaTitle,
 }) => {
   const { jsPDF } = await import("jspdf");
   const columns = buildColumns(coursesBySemesterAndYear);
@@ -327,7 +328,12 @@ export const exportMallaPdf = async ({
         y,
         colWidth,
         cardHeight,
-        resolveCourseColor(course, activeTypeColors, showTypeColors),
+        resolveCourseColor(
+          course,
+          activeTypeColors,
+          showTypeColors,
+          mallaTitle || title
+        ),
         includeMarkedCourses && finishedSet.has(course.id)
       );
     });

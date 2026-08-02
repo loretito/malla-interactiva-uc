@@ -157,8 +157,8 @@ export const CourseProvider = ({ children }) => {
     : savedTypeColors;
 
   const courseTypesInMalla = useMemo(
-    () => getTypesInCourses(baseCourses),
-    [baseCourses]
+    () => getTypesInCourses(baseCourses, title),
+    [baseCourses, title]
   );
 
   const courses = useMemo(

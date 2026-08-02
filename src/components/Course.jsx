@@ -21,6 +21,7 @@ export const Course = ({ course }) => {
     showPrerequisites,
     showTypeColors,
     activeTypeColors,
+    title,
     editMode,
     isInternado,
     reorderInternado,
@@ -122,7 +123,12 @@ export const Course = ({ course }) => {
   const isPrereqRelated = prereqIds.has(course.id);
   const isUnlockRelated = unlockIds.has(course.id);
 
-  const colorHex = resolveCourseColor(course, activeTypeColors, showTypeColors);
+  const colorHex = resolveCourseColor(
+    course,
+    activeTypeColors,
+    showTypeColors,
+    title
+  );
 
   const handleMouseEnter = () => {
     if (editMode || !showPrerequisites || !isMouseHoverAllowed()) return;

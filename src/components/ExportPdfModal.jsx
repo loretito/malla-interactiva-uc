@@ -38,6 +38,7 @@ export const ExportPdfModal = ({ open, onClose }) => {
     try {
       await exportMallaPdf({
         title,
+        mallaTitle: title,
         coursesBySemesterAndYear,
         finishedCourses,
         activeTypeColors,
