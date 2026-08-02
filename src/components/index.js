@@ -12,4 +12,5 @@ export * from "./Stats";
 export * from "./Info";
 export * from "./Malla";
 export * from "./Toast";
+export * from "./TypeColorEditor";
 export * from "./WhatsNewModal";

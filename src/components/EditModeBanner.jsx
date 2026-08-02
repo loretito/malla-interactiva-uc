@@ -51,8 +51,8 @@ export const EditModeBanner = () => {
                   : "text-[#1e427a]"
               }`}
             >
-              Edita optativos/formación general o intercambia Internados. Pulsa
-              Guardar para confirmar.
+              Edita nombres, colores por tipo o Internados. Pulsa Guardar para
+              confirmar.
             </p>
           </div>
           <div className="flex flex-wrap items-center gap-2">

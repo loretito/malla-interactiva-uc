@@ -85,14 +85,16 @@ export const WhatsNewModal = ({ open, onClose }) => {
 
         <ul className="mb-4 inline-flex flex-col items-start space-y-2 text-left text-sm">
           <ListItem done>Ver prerrequisitos</ListItem>
-          <ListItem pending>Modo edición, el cual permite:</ListItem>
-          <ListItem nested>Visualizar ramos por tipo</ListItem>
+          <ListItem done>Modo edición, el cual permite:</ListItem>
+          <ListItem nested done>Visualizar ramos por tipo</ListItem>
           <ListItem nested done>
             Editar ramos optativos y opcionales para rellenarlos con el nombre
           </ListItem>
           <ListItem nested done>
             Ordenar los Internados a preferencia
           </ListItem>
+          <ListItem>Modo oscuro</ListItem>
+          <ListItem>Obtener malla en PDF</ListItem>
         </ul>
 
         <p className="mb-4 text-sm italic text-gray-600">

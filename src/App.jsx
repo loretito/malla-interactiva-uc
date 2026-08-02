@@ -8,6 +8,7 @@ import {
   Malla,
   SettingsMenu,
   EditModeBanner,
+  TypeColorEditor,
   Toast,
 } from "./components";
 import { CourseContext } from "./context/CourseContext";
@@ -20,7 +21,7 @@ function App() {
       <Navbar />
       <EditModeBanner />
       <div className="mx-auto max-w-[1360px] px-1">
-        <div className="flex items-center justify-between mb-1">
+        <div className="mb-1 flex items-center justify-between gap-2">
           <div
             className={
               editMode
@@ -30,7 +31,10 @@ function App() {
           >
             <Button />
           </div>
-          <SettingsMenu />
+          <div className="flex items-center gap-2">
+            <TypeColorEditor />
+            <SettingsMenu />
+          </div>
         </div>
         <div
           className={
