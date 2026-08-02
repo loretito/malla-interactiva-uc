@@ -122,6 +122,8 @@ export const Course = ({ course }) => {
   let color = "bg-[#F0F0F0]";
   if (course.cc === "bg-[#CCDFF6]") {
     color = "bg-[#CCDFF6]";
+  } else if (course.cc === "bg-[#9BB8E6]") {
+    color = "bg-[#9BB8E6]";
   }
 
   const handleMouseEnter = () => {
