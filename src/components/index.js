@@ -2,6 +2,7 @@ export * from "./Button";
 export * from "./ConfirmResetModal";
 export * from "./Course";
 export * from "./CourseArrows";
+export * from "./EditCourseModal";
 export * from "./EditModeBanner";
 export * from "./Footer";
 export * from "./Navbar";

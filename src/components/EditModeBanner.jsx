@@ -40,7 +40,7 @@ export const EditModeBanner = () => {
               </p>
               {hasUnsavedInternadoChanges && (
                 <span className="inline-flex items-center rounded-full bg-amber-500 px-2.5 py-0.5 text-xs font-bold uppercase tracking-wide text-white shadow-sm">
-                  Orden modificado
+                  Cambios sin guardar
                 </span>
               )}
             </div>
@@ -51,8 +51,8 @@ export const EditModeBanner = () => {
                   : "text-[#1e427a]"
               }`}
             >
-              Cada intercambio se guarda al instante. Cancelar restaura el orden
-              de cuando entraste a editar.
+              Edita optativos/formación general o intercambia Internados. Pulsa
+              Guardar para confirmar.
             </p>
           </div>
           <div className="flex flex-wrap items-center gap-2">

@@ -1,5 +1,6 @@
 import { useContext, useEffect, useRef, useState } from "react";
 import { CourseContext } from "../context/CourseContext";
+import { EditCourseModal } from "./EditCourseModal";
 
 const LONG_PRESS_MS = 450;
 const HOVER_DELAY_MS = 1000;
@@ -20,6 +21,7 @@ export const Course = ({ course }) => {
     editMode,
     isInternado,
     reorderInternado,
+    updateCourseOverride,
     draggingInternadoId,
     setDraggingInternadoId,
     dragOverInternadoId,
@@ -28,6 +30,7 @@ export const Course = ({ course }) => {
   } = useContext(CourseContext);
 
   const [takeCourse, setTakeCourse] = useState(false);
+  const [isEditModalOpen, setIsEditModalOpen] = useState(false);
   const longPressTimer = useRef(null);
   const hoverTimer = useRef(null);
   const didLongPress = useRef(false);
@@ -36,7 +39,8 @@ export const Course = ({ course }) => {
   const didDrag = useRef(false);
 
   const canReorder = editMode && isInternado(course);
-  const isEditDimmed = editMode && !canReorder;
+  const canEditLabel = editMode && Boolean(course.labelEditable);
+  const isEditDimmed = editMode && !canReorder && !canEditLabel;
   const isDragging = draggingInternadoId === course.id;
   const isDropTarget =
     canReorder &&
@@ -46,7 +50,10 @@ export const Course = ({ course }) => {
   const isRecentlySwapped = recentlySwappedIds.has(course.id);
   let editBadgeLabel = "Intercambiable";
   let editBadgeClass = "";
-  if (isDragging) {
+  if (canEditLabel) {
+    editBadgeLabel = "Editable";
+    editBadgeClass = "course-label-editable-badge";
+  } else if (isDragging) {
     editBadgeLabel = "Origen";
     editBadgeClass = "course-drag-source-badge";
   } else if (isDropTarget) {
@@ -171,6 +178,15 @@ export const Course = ({ course }) => {
       return;
     }
 
+    if (canEditLabel) {
+      setIsEditModalOpen(true);
+      return;
+    }
+
+    if (editMode) {
+      return;
+    }
+
     clearHoverTimer();
     suppressMouseHover();
     setHighlightedCourseId(null);
@@ -234,84 +250,95 @@ export const Course = ({ course }) => {
   );
 
   return (
-    <div
-      className="w-fit"
-      onDragOver={handleDragOver}
-      onDrop={handleDrop}
-    >
-      {isDropTarget && insertionPlaceholder}
+    <>
       <div
-        data-course-id={course.id}
-        draggable={canReorder}
-        className={`relative w-32 bg-gray-600 mb-2 rounded-lg transition-all duration-200 ${
-          canReorder
-            ? "cursor-grab active:cursor-grabbing course-editable"
-            : "hover:cursor-pointer"
-        } ${isFinished ? "custom-line" : ""} ${
-          !takeCourse && !editMode ? "opacity-25" : ""
-        } ${isDimmed && !editMode ? "course-dimmed" : ""} ${
-          isEditDimmed ? "course-edit-dimmed" : ""
-        } ${isHighlighted ? "course-highlighted" : ""} ${
-          isPrereqRelated ? "course-related-prereq" : ""
-        } ${isUnlockRelated ? "course-related-unlock" : ""} ${
-          isDragging ? "course-drag-source scale-95" : ""
-        } ${isDropTarget ? "course-drop-target" : ""} ${
-          isRecentlySwapped ? "ring-4 ring-amber-400 animate-pulse" : ""
-        } mx-1`}
-        onClick={handleCourseClick}
-        onMouseEnter={handleMouseEnter}
-        onMouseLeave={handleMouseLeave}
-        onTouchStart={handleTouchStart}
-        onTouchMove={handleTouchMove}
-        onTouchEnd={handleTouchEnd}
-        onTouchCancel={handleTouchEnd}
-        onContextMenu={event => event.preventDefault()}
-        onDragStart={handleDragStart}
-        onDragEnd={handleDragEnd}
+        className="w-fit"
+        onDragOver={handleDragOver}
+        onDrop={handleDrop}
       >
-        {canReorder && (
-          <>
-            <div
-              className={`course-editable-badge ${editBadgeClass}`}
-            >
-              {editBadgeLabel}
-            </div>
-            <div className="absolute left-1 top-1 z-20 rounded bg-black/45 px-1 text-[9px] font-bold text-white">
-              ⋮⋮
-            </div>
-          </>
-        )}
-
-        <div className="flex justify-between items-center h-6">
-          <p className="text-white font-bold text-xs pl-1">{course.code}</p>
-          <div className="bg-white course-code mr-1">
-            <p className="">{course.id}</p>
-          </div>
-        </div>
+        {isDropTarget && insertionPlaceholder}
         <div
-          className={`${color} h-12 flex justify-center items-center text-center w-full `}
+          data-course-id={course.id}
+          draggable={canReorder}
+          className={`relative w-32 bg-gray-600 mb-2 rounded-lg transition-all duration-200 ${
+            canReorder
+              ? "cursor-grab active:cursor-grabbing course-editable"
+              : canEditLabel
+                ? "cursor-pointer course-label-editable"
+                : "hover:cursor-pointer"
+          } ${isFinished ? "custom-line" : ""} ${
+            !takeCourse && !editMode ? "opacity-25" : ""
+          } ${isDimmed && !editMode ? "course-dimmed" : ""} ${
+            isEditDimmed ? "course-edit-dimmed" : ""
+          } ${isHighlighted ? "course-highlighted" : ""} ${
+            isPrereqRelated ? "course-related-prereq" : ""
+          } ${isUnlockRelated ? "course-related-unlock" : ""} ${
+            isDragging ? "course-drag-source scale-95" : ""
+          } ${isDropTarget ? "course-drop-target" : ""} ${
+            isRecentlySwapped ? "ring-4 ring-amber-400 animate-pulse" : ""
+          } mx-1`}
+          onClick={handleCourseClick}
+          onMouseEnter={handleMouseEnter}
+          onMouseLeave={handleMouseLeave}
+          onTouchStart={handleTouchStart}
+          onTouchMove={handleTouchMove}
+          onTouchEnd={handleTouchEnd}
+          onTouchCancel={handleTouchEnd}
+          onContextMenu={event => event.preventDefault()}
+          onDragStart={handleDragStart}
+          onDragEnd={handleDragEnd}
         >
-          <p className="line-clamp text-sm">{course.course}</p>
-        </div>
-        <div className="flex justify-between p-1">
-          <div className="flex justify-start">
-            {course.req.map(r => (
-              <div key={r.id} className={`course-code ${color} mx-0 border`}>
-                <p className="text-xs">{r.id}</p>
+          {(canReorder || canEditLabel) && (
+            <>
+              <div className={`course-editable-badge ${editBadgeClass}`}>
+                {editBadgeLabel}
               </div>
-            ))}
+              {canReorder && (
+                <div className="absolute left-1 top-1 z-20 rounded bg-black/45 px-1 text-[9px] font-bold text-white">
+                  ⋮⋮
+                </div>
+              )}
+            </>
+          )}
+
+          <div className="flex justify-between items-center h-6">
+            <p className="text-white font-bold text-xs pl-1">{course.code}</p>
+            <div className="bg-white course-code mr-1">
+              <p className="">{course.id}</p>
+            </div>
           </div>
-          <div className="flex items-center justify-center">
-            <p
-              className={`${
-                course.cr ? "bg-white" : ""
-              } h-4 w-4 text-center text-xs`}
-            >
-              {course.cr}
-            </p>
+          <div
+            className={`${color} h-12 flex justify-center items-center text-center w-full `}
+          >
+            <p className="line-clamp text-sm">{course.course}</p>
+          </div>
+          <div className="flex justify-between p-1">
+            <div className="flex justify-start">
+              {course.req.map(r => (
+                <div key={r.id} className={`course-code ${color} mx-0 border`}>
+                  <p className="text-xs">{r.id}</p>
+                </div>
+              ))}
+            </div>
+            <div className="flex items-center justify-center">
+              <p
+                className={`${
+                  course.cr ? "bg-white" : ""
+                } h-4 w-4 text-center text-xs`}
+              >
+                {course.cr}
+              </p>
+            </div>
           </div>
         </div>
       </div>
-    </div>
+
+      <EditCourseModal
+        open={isEditModalOpen}
+        course={course}
+        onClose={() => setIsEditModalOpen(false)}
+        onSave={override => updateCourseOverride(course.id, override)}
+      />
+    </>
   );
 };

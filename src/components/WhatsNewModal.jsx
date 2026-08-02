@@ -87,7 +87,7 @@ export const WhatsNewModal = ({ open, onClose }) => {
           <ListItem done>Ver prerrequisitos</ListItem>
           <ListItem pending>Modo edición, el cual permite:</ListItem>
           <ListItem nested>Visualizar ramos por tipo</ListItem>
-          <ListItem nested>
+          <ListItem nested done>
             Editar ramos optativos y opcionales para rellenarlos con el nombre
           </ListItem>
           <ListItem nested done>

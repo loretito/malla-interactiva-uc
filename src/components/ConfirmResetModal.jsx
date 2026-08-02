@@ -43,6 +43,9 @@ export const ConfirmResetModal = ({ open, title, onConfirm, onClose }) => {
         </p>
         <ul className="mb-4 list-disc space-y-1 pl-5 text-sm text-gray-700">
           <li>Los Internados volverán al orden por defecto</li>
+          <li>
+            Los nombres y códigos de optativos / formación general se borrarán
+          </li>
         </ul>
         <p className="mb-5 text-sm font-medium text-amber-800">
           Los cursos terminados y créditos no se modifican. Solo afecta a{" "}

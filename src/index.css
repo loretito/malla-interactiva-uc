@@ -102,13 +102,19 @@
   background: rgba(17, 24, 39, 0.62);
 }
 
-.course-editable {
+.course-editable,
+.course-label-editable {
   outline: 3px solid #2d5699;
   outline-offset: 2px;
   box-shadow: 0 0 0 4px rgba(45, 86, 153, 0.28), 0 6px 16px rgba(45, 86, 153, 0.2);
   opacity: 1 !important;
   filter: none;
   z-index: 6;
+}
+
+.course-label-editable {
+  outline-color: #0f766e;
+  box-shadow: 0 0 0 4px rgba(15, 118, 110, 0.28), 0 6px 16px rgba(15, 118, 110, 0.2);
 }
 
 .course-editable-badge {
@@ -144,6 +150,10 @@
 
 .course-drop-target-badge {
   background: #10b981;
+}
+
+.course-label-editable-badge {
+  background: #0f766e;
 }
 
 @keyframes toast-appear {

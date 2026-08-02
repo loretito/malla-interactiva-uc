@@ -8,6 +8,13 @@ import {
   normalizeInternadoOrder,
   swapInternados,
 } from "../utils/internados";
+import {
+  applyCourseOverrides,
+  areCourseOverridesEqual,
+  cloneCourseOverrides,
+  isEditableCourse,
+  normalizeCourseOverrides,
+} from "../utils/editable-courses";
 
 const readJson = (key, fallback) => {
   try {
@@ -25,6 +32,7 @@ const MALLA_TITLES = [MALLA_NUEVA, MALLA_ANTIGUA];
 const stored = readJson("stored", MALLA_NUEVA);
 const storedShowPrerequisites = readJson("showPrerequisites", true);
 const storedInternadoOrderByMalla = readJson("internadoOrderByMalla", {});
+const storedCourseOverridesByMalla = readJson("courseOverridesByMalla", {});
 const SWAP_HIGHLIGHT_MS = 1400;
 
 const createEmptyProgress = () => ({
@@ -86,8 +94,13 @@ export const CourseProvider = ({ children }) => {
   const [internadoOrderByMalla, setInternadoOrderByMalla] = useState(
     storedInternadoOrderByMalla
   );
+  const [courseOverridesByMalla, setCourseOverridesByMalla] = useState(
+    storedCourseOverridesByMalla
+  );
   const [draftInternadoOrder, setDraftInternadoOrder] = useState(null);
   const [editBaselineOrder, setEditBaselineOrder] = useState(null);
+  const [draftCourseOverrides, setDraftCourseOverrides] = useState(null);
+  const [editBaselineOverrides, setEditBaselineOverrides] = useState(null);
   const [draggingInternadoId, setDraggingInternadoId] = useState(null);
   const [dragOverInternadoId, setDragOverInternadoId] = useState(null);
   const [recentlySwappedIds, setRecentlySwappedIds] = useState(new Set());
@@ -106,13 +119,26 @@ export const CourseProvider = ({ children }) => {
     return normalizeInternadoOrder(baseCourses, storedOrder || []);
   }, [baseCourses, internadoOrderByMalla, title]);
 
+  const savedCourseOverrides = useMemo(
+    () => normalizeCourseOverrides(courseOverridesByMalla[title]),
+    [courseOverridesByMalla, title]
+  );
+
   const activeInternadoOrder = editMode
     ? draftInternadoOrder || savedInternadoOrder
     : savedInternadoOrder;
 
+  const activeCourseOverrides = editMode
+    ? draftCourseOverrides || savedCourseOverrides
+    : savedCourseOverrides;
+
   const courses = useMemo(
-    () => applyInternadoOrder(baseCourses, activeInternadoOrder),
-    [baseCourses, activeInternadoOrder]
+    () =>
+      applyCourseOverrides(
+        applyInternadoOrder(baseCourses, activeInternadoOrder),
+        activeCourseOverrides
+      ),
+    [baseCourses, activeInternadoOrder, activeCourseOverrides]
   );
 
   const coursesById = useMemo(() => {
@@ -187,16 +213,31 @@ export const CourseProvider = ({ children }) => {
   }, [highlightedCourseId, coursesById, dependentsById, showPrerequisites]);
 
   const hasUnsavedInternadoChanges = useMemo(() => {
-    if (!editMode || !draftInternadoOrder || !editBaselineOrder) {
+    if (!editMode) {
       return false;
     }
-    if (draftInternadoOrder.length !== editBaselineOrder.length) {
-      return true;
-    }
-    return draftInternadoOrder.some(
-      (id, index) => id !== editBaselineOrder[index]
-    );
-  }, [editMode, draftInternadoOrder, editBaselineOrder]);
+
+    const orderChanged =
+      draftInternadoOrder &&
+      editBaselineOrder &&
+      (draftInternadoOrder.length !== editBaselineOrder.length ||
+        draftInternadoOrder.some(
+          (id, index) => id !== editBaselineOrder[index]
+        ));
+
+    const overridesChanged =
+      draftCourseOverrides != null &&
+      editBaselineOverrides != null &&
+      !areCourseOverridesEqual(draftCourseOverrides, editBaselineOverrides);
+
+    return Boolean(orderChanged || overridesChanged);
+  }, [
+    editMode,
+    draftInternadoOrder,
+    editBaselineOrder,
+    draftCourseOverrides,
+    editBaselineOverrides,
+  ]);
 
   useEffect(() => {
     localStorage.setItem("progressByMalla", JSON.stringify(progressByMalla));
@@ -223,10 +264,19 @@ export const CourseProvider = ({ children }) => {
   }, [internadoOrderByMalla]);
 
   useEffect(() => {
+    localStorage.setItem(
+      "courseOverridesByMalla",
+      JSON.stringify(courseOverridesByMalla)
+    );
+  }, [courseOverridesByMalla]);
+
+  useEffect(() => {
     setHighlightedCourseId(null);
     setEditMode(false);
     setDraftInternadoOrder(null);
     setEditBaselineOrder(null);
+    setDraftCourseOverrides(null);
+    setEditBaselineOverrides(null);
     setDraggingInternadoId(null);
     setDragOverInternadoId(null);
     setRecentlySwappedIds(new Set());
@@ -298,17 +348,24 @@ export const CourseProvider = ({ children }) => {
 
   const resetMallaToDefault = useCallback(() => {
     const defaultOrder = getDefaultInternadoOrder(baseCourses);
+    const emptyOverrides = {};
     setInternadoOrderByMalla(prev => ({
       ...prev,
       [title]: defaultOrder,
     }));
+    setCourseOverridesByMalla(prev => ({
+      ...prev,
+      [title]: emptyOverrides,
+    }));
     setDraftInternadoOrder(defaultOrder);
     setEditBaselineOrder(defaultOrder);
+    setDraftCourseOverrides(emptyOverrides);
+    setEditBaselineOverrides(emptyOverrides);
     setDraggingInternadoId(null);
     setDragOverInternadoId(null);
     setRecentlySwappedIds(new Set());
     setHighlightedCourseId(null);
-    showToast("Se restableció el orden por defecto");
+    showToast("Se restablecieron los cambios editables");
   }, [title, baseCourses, showToast]);
 
   const handleClick = useCallback(
@@ -339,20 +396,28 @@ export const CourseProvider = ({ children }) => {
   }, []);
 
   const enterEditMode = useCallback(() => {
+    const overridesSnapshot = cloneCourseOverrides(savedCourseOverrides);
     setDraftInternadoOrder(savedInternadoOrder);
     setEditBaselineOrder(savedInternadoOrder);
+    setDraftCourseOverrides(overridesSnapshot);
+    setEditBaselineOverrides(cloneCourseOverrides(overridesSnapshot));
     setEditMode(true);
     setHighlightedCourseId(null);
-  }, [savedInternadoOrder]);
+  }, [savedInternadoOrder, savedCourseOverrides]);
 
   const cancelEditMode = useCallback(() => {
-    const hadChanges =
+    const orderChanged =
       draftInternadoOrder &&
       editBaselineOrder &&
       (draftInternadoOrder.length !== editBaselineOrder.length ||
         draftInternadoOrder.some(
           (id, index) => id !== editBaselineOrder[index]
         ));
+    const overridesChanged =
+      draftCourseOverrides != null &&
+      editBaselineOverrides != null &&
+      !areCourseOverridesEqual(draftCourseOverrides, editBaselineOverrides);
+    const hadChanges = Boolean(orderChanged || overridesChanged);
 
     if (editBaselineOrder) {
       setInternadoOrderByMalla(prev => ({
@@ -362,27 +427,72 @@ export const CourseProvider = ({ children }) => {
     }
     setDraftInternadoOrder(null);
     setEditBaselineOrder(null);
+    setDraftCourseOverrides(null);
+    setEditBaselineOverrides(null);
     setDraggingInternadoId(null);
     setDragOverInternadoId(null);
     setEditMode(false);
     if (hadChanges) {
       showToast("Se descartaron los cambios");
     }
-  }, [draftInternadoOrder, editBaselineOrder, title, showToast]);
+  }, [
+    draftInternadoOrder,
+    editBaselineOrder,
+    draftCourseOverrides,
+    editBaselineOverrides,
+    title,
+    showToast,
+  ]);
 
   const saveEditMode = useCallback(() => {
     const orderToSave = draftInternadoOrder || savedInternadoOrder;
+    const overridesToSave = normalizeCourseOverrides(
+      draftCourseOverrides || savedCourseOverrides
+    );
     setInternadoOrderByMalla(prev => ({
       ...prev,
       [title]: orderToSave,
     }));
+    setCourseOverridesByMalla(prev => ({
+      ...prev,
+      [title]: overridesToSave,
+    }));
     setDraftInternadoOrder(null);
     setEditBaselineOrder(null);
+    setDraftCourseOverrides(null);
+    setEditBaselineOverrides(null);
     setDraggingInternadoId(null);
     setDragOverInternadoId(null);
     setEditMode(false);
     showToast("Se guardaron los cambios");
-  }, [draftInternadoOrder, savedInternadoOrder, title, showToast]);
+  }, [
+    draftInternadoOrder,
+    savedInternadoOrder,
+    draftCourseOverrides,
+    savedCourseOverrides,
+    title,
+    showToast,
+  ]);
+
+  const updateCourseOverride = useCallback(
+    (courseId, override) => {
+      if (!editMode) {
+        return;
+      }
+      setDraftCourseOverrides(prev => {
+        const current = normalizeCourseOverrides(prev || savedCourseOverrides);
+        return {
+          ...current,
+          [String(courseId)]: {
+            code: typeof override.code === "string" ? override.code.trim() : "",
+            course:
+              typeof override.course === "string" ? override.course.trim() : "",
+          },
+        };
+      });
+    },
+    [editMode, savedCourseOverrides]
+  );
 
   const toggleEditMode = useCallback(() => {
     if (editMode) {
@@ -445,12 +555,14 @@ export const CourseProvider = ({ children }) => {
       saveEditMode,
       hasUnsavedInternadoChanges,
       reorderInternado,
+      updateCourseOverride,
       draggingInternadoId,
       setDraggingInternadoId,
       dragOverInternadoId,
       setDragOverInternadoId,
       recentlySwappedIds,
       isInternado,
+      isEditableCourse,
       toastMessage,
       clearToast,
     }),
@@ -478,6 +590,7 @@ export const CourseProvider = ({ children }) => {
       saveEditMode,
       hasUnsavedInternadoChanges,
       reorderInternado,
+      updateCourseOverride,
       draggingInternadoId,
       dragOverInternadoId,
       recentlySwappedIds,
