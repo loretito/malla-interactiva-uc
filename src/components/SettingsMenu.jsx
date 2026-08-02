@@ -6,6 +6,8 @@ export const SettingsMenu = () => {
   const {
     showPrerequisites,
     toggleShowPrerequisites,
+    showTypeColors,
+    toggleShowTypeColors,
     editMode,
     toggleEditMode,
   } = useContext(CourseContext);
@@ -68,6 +70,21 @@ export const SettingsMenu = () => {
                 className="h-4 w-4 accent-[#2d5699]"
                 checked={showPrerequisites}
                 onChange={toggleShowPrerequisites}
+              />
+            </label>
+
+            <label className="mb-3 flex cursor-pointer items-center justify-between gap-3 rounded-lg px-2 py-2 hover:bg-gray-50 dark:hover:bg-gray-700">
+              <span className="text-sm text-gray-700 dark:text-gray-200">
+                Ver colores por tipo
+                <span className="mt-0.5 block text-xs text-gray-500">
+                  Colorea ramos según su categoría
+                </span>
+              </span>
+              <input
+                type="checkbox"
+                className="h-4 w-4 accent-[#2d5699]"
+                checked={showTypeColors}
+                onChange={toggleShowTypeColors}
               />
             </label>
 

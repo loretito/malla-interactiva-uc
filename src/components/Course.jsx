@@ -1,5 +1,6 @@
 import { useContext, useEffect, useRef, useState } from "react";
 import { CourseContext } from "../context/CourseContext";
+import { resolveCourseColor } from "../utils/course-type-colors";
 import { EditCourseModal } from "./EditCourseModal";
 
 const LONG_PRESS_MS = 450;
@@ -18,6 +19,8 @@ export const Course = ({ course }) => {
     prereqIds,
     unlockIds,
     showPrerequisites,
+    showTypeColors,
+    activeTypeColors,
     editMode,
     isInternado,
     reorderInternado,
@@ -119,12 +122,7 @@ export const Course = ({ course }) => {
   const isPrereqRelated = prereqIds.has(course.id);
   const isUnlockRelated = unlockIds.has(course.id);
 
-  let color = "bg-[#F0F0F0]";
-  if (course.cc === "bg-[#CCDFF6]") {
-    color = "bg-[#CCDFF6]";
-  } else if (course.cc === "bg-[#9BB8E6]") {
-    color = "bg-[#9BB8E6]";
-  }
+  const colorHex = resolveCourseColor(course, activeTypeColors, showTypeColors);
 
   const handleMouseEnter = () => {
     if (editMode || !showPrerequisites || !isMouseHoverAllowed()) return;
@@ -310,14 +308,19 @@ export const Course = ({ course }) => {
             </div>
           </div>
           <div
-            className={`${color} h-12 flex justify-center items-center text-center w-full `}
+            className="flex h-12 w-full items-center justify-center text-center"
+            style={{ backgroundColor: colorHex }}
           >
             <p className="line-clamp text-sm">{course.course}</p>
           </div>
           <div className="flex justify-between p-1">
             <div className="flex justify-start">
               {course.req.map(r => (
-                <div key={r.id} className={`course-code ${color} mx-0 border`}>
+                <div
+                  key={r.id}
+                  className="course-code mx-0 border"
+                  style={{ backgroundColor: colorHex }}
+                >
                   <p className="text-xs">{r.id}</p>
                 </div>
               ))}

@@ -15,6 +15,13 @@ import {
   isEditableCourse,
   normalizeCourseOverrides,
 } from "../utils/editable-courses";
+import {
+  areTypeColorsEqual,
+  cloneTypeColors,
+  DEFAULT_TYPE_COLORS,
+  getTypesInCourses,
+  normalizeTypeColors,
+} from "../utils/course-type-colors";
 
 const readJson = (key, fallback) => {
   try {
@@ -33,6 +40,8 @@ const stored = readJson("stored", MALLA_NUEVA);
 const storedShowPrerequisites = readJson("showPrerequisites", true);
 const storedInternadoOrderByMalla = readJson("internadoOrderByMalla", {});
 const storedCourseOverridesByMalla = readJson("courseOverridesByMalla", {});
+const storedShowTypeColors = readJson("showTypeColors", false);
+const storedTypeColorsByMalla = readJson("typeColorsByMalla", {});
 const SWAP_HIGHLIGHT_MS = 1400;
 
 const createEmptyProgress = () => ({
@@ -90,6 +99,7 @@ export const CourseProvider = ({ children }) => {
   const [showPrerequisites, setShowPrerequisites] = useState(
     storedShowPrerequisites
   );
+  const [showTypeColors, setShowTypeColors] = useState(storedShowTypeColors);
   const [editMode, setEditMode] = useState(false);
   const [internadoOrderByMalla, setInternadoOrderByMalla] = useState(
     storedInternadoOrderByMalla
@@ -97,10 +107,15 @@ export const CourseProvider = ({ children }) => {
   const [courseOverridesByMalla, setCourseOverridesByMalla] = useState(
     storedCourseOverridesByMalla
   );
+  const [typeColorsByMalla, setTypeColorsByMalla] = useState(
+    storedTypeColorsByMalla
+  );
   const [draftInternadoOrder, setDraftInternadoOrder] = useState(null);
   const [editBaselineOrder, setEditBaselineOrder] = useState(null);
   const [draftCourseOverrides, setDraftCourseOverrides] = useState(null);
   const [editBaselineOverrides, setEditBaselineOverrides] = useState(null);
+  const [draftTypeColors, setDraftTypeColors] = useState(null);
+  const [editBaselineTypeColors, setEditBaselineTypeColors] = useState(null);
   const [draggingInternadoId, setDraggingInternadoId] = useState(null);
   const [dragOverInternadoId, setDragOverInternadoId] = useState(null);
   const [recentlySwappedIds, setRecentlySwappedIds] = useState(new Set());
@@ -124,6 +139,11 @@ export const CourseProvider = ({ children }) => {
     [courseOverridesByMalla, title]
   );
 
+  const savedTypeColors = useMemo(
+    () => normalizeTypeColors(typeColorsByMalla[title]),
+    [typeColorsByMalla, title]
+  );
+
   const activeInternadoOrder = editMode
     ? draftInternadoOrder || savedInternadoOrder
     : savedInternadoOrder;
@@ -131,6 +151,15 @@ export const CourseProvider = ({ children }) => {
   const activeCourseOverrides = editMode
     ? draftCourseOverrides || savedCourseOverrides
     : savedCourseOverrides;
+
+  const activeTypeColors = editMode
+    ? draftTypeColors || savedTypeColors
+    : savedTypeColors;
+
+  const courseTypesInMalla = useMemo(
+    () => getTypesInCourses(baseCourses),
+    [baseCourses]
+  );
 
   const courses = useMemo(
     () =>
@@ -230,13 +259,20 @@ export const CourseProvider = ({ children }) => {
       editBaselineOverrides != null &&
       !areCourseOverridesEqual(draftCourseOverrides, editBaselineOverrides);
 
-    return Boolean(orderChanged || overridesChanged);
+    const typeColorsChanged =
+      draftTypeColors != null &&
+      editBaselineTypeColors != null &&
+      !areTypeColorsEqual(draftTypeColors, editBaselineTypeColors);
+
+    return Boolean(orderChanged || overridesChanged || typeColorsChanged);
   }, [
     editMode,
     draftInternadoOrder,
     editBaselineOrder,
     draftCourseOverrides,
     editBaselineOverrides,
+    draftTypeColors,
+    editBaselineTypeColors,
   ]);
 
   useEffect(() => {
@@ -271,12 +307,25 @@ export const CourseProvider = ({ children }) => {
   }, [courseOverridesByMalla]);
 
   useEffect(() => {
+    localStorage.setItem("showTypeColors", JSON.stringify(showTypeColors));
+  }, [showTypeColors]);
+
+  useEffect(() => {
+    localStorage.setItem(
+      "typeColorsByMalla",
+      JSON.stringify(typeColorsByMalla)
+    );
+  }, [typeColorsByMalla]);
+
+  useEffect(() => {
     setHighlightedCourseId(null);
     setEditMode(false);
     setDraftInternadoOrder(null);
     setEditBaselineOrder(null);
     setDraftCourseOverrides(null);
     setEditBaselineOverrides(null);
+    setDraftTypeColors(null);
+    setEditBaselineTypeColors(null);
     setDraggingInternadoId(null);
     setDragOverInternadoId(null);
     setRecentlySwappedIds(new Set());
@@ -349,6 +398,7 @@ export const CourseProvider = ({ children }) => {
   const resetMallaToDefault = useCallback(() => {
     const defaultOrder = getDefaultInternadoOrder(baseCourses);
     const emptyOverrides = {};
+    const defaultColors = { ...DEFAULT_TYPE_COLORS };
     setInternadoOrderByMalla(prev => ({
       ...prev,
       [title]: defaultOrder,
@@ -357,10 +407,16 @@ export const CourseProvider = ({ children }) => {
       ...prev,
       [title]: emptyOverrides,
     }));
+    setTypeColorsByMalla(prev => ({
+      ...prev,
+      [title]: defaultColors,
+    }));
     setDraftInternadoOrder(defaultOrder);
     setEditBaselineOrder(defaultOrder);
     setDraftCourseOverrides(emptyOverrides);
     setEditBaselineOverrides(emptyOverrides);
+    setDraftTypeColors(defaultColors);
+    setEditBaselineTypeColors(defaultColors);
     setDraggingInternadoId(null);
     setDragOverInternadoId(null);
     setRecentlySwappedIds(new Set());
@@ -395,15 +451,22 @@ export const CourseProvider = ({ children }) => {
     setShowPrerequisites(prev => !prev);
   }, []);
 
+  const toggleShowTypeColors = useCallback(() => {
+    setShowTypeColors(prev => !prev);
+  }, []);
+
   const enterEditMode = useCallback(() => {
     const overridesSnapshot = cloneCourseOverrides(savedCourseOverrides);
+    const colorsSnapshot = cloneTypeColors(savedTypeColors);
     setDraftInternadoOrder(savedInternadoOrder);
     setEditBaselineOrder(savedInternadoOrder);
     setDraftCourseOverrides(overridesSnapshot);
     setEditBaselineOverrides(cloneCourseOverrides(overridesSnapshot));
+    setDraftTypeColors(colorsSnapshot);
+    setEditBaselineTypeColors(cloneTypeColors(colorsSnapshot));
     setEditMode(true);
     setHighlightedCourseId(null);
-  }, [savedInternadoOrder, savedCourseOverrides]);
+  }, [savedInternadoOrder, savedCourseOverrides, savedTypeColors]);
 
   const cancelEditMode = useCallback(() => {
     const orderChanged =
@@ -417,7 +480,13 @@ export const CourseProvider = ({ children }) => {
       draftCourseOverrides != null &&
       editBaselineOverrides != null &&
       !areCourseOverridesEqual(draftCourseOverrides, editBaselineOverrides);
-    const hadChanges = Boolean(orderChanged || overridesChanged);
+    const typeColorsChanged =
+      draftTypeColors != null &&
+      editBaselineTypeColors != null &&
+      !areTypeColorsEqual(draftTypeColors, editBaselineTypeColors);
+    const hadChanges = Boolean(
+      orderChanged || overridesChanged || typeColorsChanged
+    );
 
     if (editBaselineOrder) {
       setInternadoOrderByMalla(prev => ({
@@ -429,6 +498,8 @@ export const CourseProvider = ({ children }) => {
     setEditBaselineOrder(null);
     setDraftCourseOverrides(null);
     setEditBaselineOverrides(null);
+    setDraftTypeColors(null);
+    setEditBaselineTypeColors(null);
     setDraggingInternadoId(null);
     setDragOverInternadoId(null);
     setEditMode(false);
@@ -440,6 +511,8 @@ export const CourseProvider = ({ children }) => {
     editBaselineOrder,
     draftCourseOverrides,
     editBaselineOverrides,
+    draftTypeColors,
+    editBaselineTypeColors,
     title,
     showToast,
   ]);
@@ -449,6 +522,9 @@ export const CourseProvider = ({ children }) => {
     const overridesToSave = normalizeCourseOverrides(
       draftCourseOverrides || savedCourseOverrides
     );
+    const colorsToSave = normalizeTypeColors(
+      draftTypeColors || savedTypeColors
+    );
     setInternadoOrderByMalla(prev => ({
       ...prev,
       [title]: orderToSave,
@@ -457,10 +533,16 @@ export const CourseProvider = ({ children }) => {
       ...prev,
       [title]: overridesToSave,
     }));
+    setTypeColorsByMalla(prev => ({
+      ...prev,
+      [title]: colorsToSave,
+    }));
     setDraftInternadoOrder(null);
     setEditBaselineOrder(null);
     setDraftCourseOverrides(null);
     setEditBaselineOverrides(null);
+    setDraftTypeColors(null);
+    setEditBaselineTypeColors(null);
     setDraggingInternadoId(null);
     setDragOverInternadoId(null);
     setEditMode(false);
@@ -470,6 +552,8 @@ export const CourseProvider = ({ children }) => {
     savedInternadoOrder,
     draftCourseOverrides,
     savedCourseOverrides,
+    draftTypeColors,
+    savedTypeColors,
     title,
     showToast,
   ]);
@@ -492,6 +576,20 @@ export const CourseProvider = ({ children }) => {
       });
     },
     [editMode, savedCourseOverrides]
+  );
+
+  const updateTypeColor = useCallback(
+    (typeKey, hex) => {
+      if (!editMode) {
+        return;
+      }
+      setShowTypeColors(true);
+      setDraftTypeColors(prev => ({
+        ...normalizeTypeColors(prev || savedTypeColors),
+        [typeKey]: hex,
+      }));
+    },
+    [editMode, savedTypeColors]
   );
 
   const toggleEditMode = useCallback(() => {
@@ -548,6 +646,11 @@ export const CourseProvider = ({ children }) => {
       showPrerequisites,
       setShowPrerequisites,
       toggleShowPrerequisites,
+      showTypeColors,
+      toggleShowTypeColors,
+      activeTypeColors,
+      courseTypesInMalla,
+      updateTypeColor,
       editMode,
       toggleEditMode,
       enterEditMode,
@@ -583,6 +686,11 @@ export const CourseProvider = ({ children }) => {
       unlockIds,
       showPrerequisites,
       toggleShowPrerequisites,
+      showTypeColors,
+      toggleShowTypeColors,
+      activeTypeColors,
+      courseTypesInMalla,
+      updateTypeColor,
       editMode,
       toggleEditMode,
       enterEditMode,

@@ -46,6 +46,7 @@ export const ConfirmResetModal = ({ open, title, onConfirm, onClose }) => {
           <li>
             Los nombres y códigos de optativos / formación general se borrarán
           </li>
+          <li>Los colores por tipo volverán a los valores por defecto</li>
         </ul>
         <p className="mb-5 text-sm font-medium text-amber-800">
           Los cursos terminados y créditos no se modifican. Solo afecta a{" "}
