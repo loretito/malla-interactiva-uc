@@ -1,6 +1,9 @@
 export * from "./Button";
+export * from "./ConfirmResetModal";
 export * from "./Course";
 export * from "./CourseArrows";
+export * from "./EditCourseModal";
+export * from "./EditModeBanner";
 export * from "./Footer";
 export * from "./Navbar";
 export * from "./Semesters";
@@ -8,4 +11,5 @@ export * from "./SettingsMenu";
 export * from "./Stats";
 export * from "./Info";
 export * from "./Malla";
+export * from "./Toast";
 export * from "./WhatsNewModal";

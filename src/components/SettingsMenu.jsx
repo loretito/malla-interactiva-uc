@@ -7,6 +7,7 @@ export const SettingsMenu = () => {
     showPrerequisites,
     toggleShowPrerequisites,
     editMode,
+    toggleEditMode,
   } = useContext(CourseContext);
 
   const [isOpen, setIsOpen] = useState(false);
@@ -70,19 +71,18 @@ export const SettingsMenu = () => {
               />
             </label>
 
-            <label className="mb-3 flex cursor-not-allowed items-center justify-between gap-3 rounded-lg px-2 py-2 opacity-60">
+            <label className="mb-3 flex cursor-pointer items-center justify-between gap-3 rounded-lg px-2 py-2 hover:bg-gray-50 dark:hover:bg-gray-700">
               <span className="text-sm text-gray-700 dark:text-gray-200">
                 Modo edición
-                <span className="mt-0.5 block text-xs text-gray-500">
-                  Próximamente
-                </span>
               </span>
               <input
                 type="checkbox"
                 className="h-4 w-4 accent-[#2d5699]"
                 checked={editMode}
-                disabled
-                readOnly
+                onChange={() => {
+                  toggleEditMode();
+                  setIsOpen(false);
+                }}
               />
             </label>
 
