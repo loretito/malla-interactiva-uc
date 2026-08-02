@@ -94,7 +94,7 @@ export const WhatsNewModal = ({ open, onClose }) => {
             Ordenar los Internados a preferencia
           </ListItem>
           <ListItem>Modo oscuro</ListItem>
-          <ListItem>Obtener malla en PDF</ListItem>
+          <ListItem done>Obtener malla en PDF</ListItem>
         </ul>
 
         <p className="mb-4 text-sm italic text-gray-600">

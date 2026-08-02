@@ -308,13 +308,13 @@ export const Course = ({ course }) => {
             </div>
           </div>
           <div
-            className="flex h-12 w-full items-center justify-center text-center"
+            className="course-title flex h-12 w-full items-center justify-center text-center"
             style={{ backgroundColor: colorHex }}
           >
             <p className="line-clamp text-sm">{course.course}</p>
           </div>
-          <div className="flex justify-between p-1">
-            <div className="flex justify-start">
+          <div className="course-footer flex justify-between p-1">
+            <div className="course-reqs flex flex-wrap justify-start gap-0.5">
               {course.req.map(r => (
                 <div
                   key={r.id}

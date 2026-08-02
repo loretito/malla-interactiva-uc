@@ -4,3 +4,4 @@ export * from "./relation-colors";
 export * from "./internados";
 export * from "./editable-courses";
 export * from "./course-type-colors";
+export * from "./export-malla-pdf";

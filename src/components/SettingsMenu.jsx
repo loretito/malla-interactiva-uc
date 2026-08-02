@@ -1,5 +1,6 @@
 import { useContext, useEffect, useRef, useState } from "react";
 import { CourseContext } from "../context/CourseContext";
+import { ExportPdfModal } from "./ExportPdfModal";
 import { WhatsNewModal } from "./WhatsNewModal";
 
 export const SettingsMenu = () => {
@@ -14,6 +15,7 @@ export const SettingsMenu = () => {
 
   const [isOpen, setIsOpen] = useState(false);
   const [isWhatsNewOpen, setIsWhatsNewOpen] = useState(false);
+  const [isPdfOpen, setIsPdfOpen] = useState(false);
   const menuRef = useRef(null);
 
   useEffect(() => {
@@ -105,6 +107,17 @@ export const SettingsMenu = () => {
 
             <button
               type="button"
+              className="mb-2 w-full rounded-lg border border-[#2d5699]/30 bg-[#e8f1fb] px-3 py-2 text-sm font-semibold text-[#2d5699] hover:bg-[#d9e7f8]"
+              onClick={() => {
+                setIsPdfOpen(true);
+                setIsOpen(false);
+              }}
+            >
+              Obtener malla en PDF
+            </button>
+
+            <button
+              type="button"
               className="w-full rounded-lg bg-[#2d5699] px-3 py-2 text-sm font-semibold text-white hover:bg-[#1e427a]"
               onClick={() => {
                 setIsWhatsNewOpen(true);
@@ -116,6 +129,8 @@ export const SettingsMenu = () => {
           </div>
         )}
       </div>
+
+      <ExportPdfModal open={isPdfOpen} onClose={() => setIsPdfOpen(false)} />
 
       <WhatsNewModal
         open={isWhatsNewOpen}

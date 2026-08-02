@@ -667,6 +667,7 @@ export const CourseProvider = ({ children }) => {
       isInternado,
       isEditableCourse,
       toastMessage,
+      showToast,
       clearToast,
     }),
     [
@@ -703,6 +704,7 @@ export const CourseProvider = ({ children }) => {
       dragOverInternadoId,
       recentlySwappedIds,
       toastMessage,
+      showToast,
       clearToast,
     ]
   );

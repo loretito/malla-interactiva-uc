@@ -4,6 +4,7 @@ export * from "./Course";
 export * from "./CourseArrows";
 export * from "./EditCourseModal";
 export * from "./EditModeBanner";
+export * from "./ExportPdfModal";
 export * from "./Footer";
 export * from "./Navbar";
 export * from "./Semesters";
